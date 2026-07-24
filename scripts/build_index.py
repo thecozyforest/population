@@ -4,6 +4,7 @@ ROOT = Path(__file__).resolve().parents[1]
 base = (ROOT / "base.html").read_text(encoding="utf-8")
 trend = (ROOT / "trend-enhancements.js").read_text(encoding="utf-8")
 guide = (ROOT / "guide-enhancements.js").read_text(encoding="utf-8")
+fieldwork = (ROOT / "fieldwork-enhancements.js").read_text(encoding="utf-8")
 
 old_decoder = 'new TextDecoder("euc-kr").decode(await r.arrayBuffer())'
 new_decoder = 'window.__decodePopulation(await r.arrayBuffer())'
@@ -28,7 +29,11 @@ if "</head>" not in base or "</body>" not in base:
     raise SystemExit("base.html does not contain closing head/body tags")
 
 base = base.replace("</head>", head_injection + "\n</head>", 1)
-body_injection = f"\n<script>\n{trend}\n</script>\n<script>\n{guide}\n</script>\n"
+body_injection = (
+    f"\n<script>\n{trend}\n</script>\n"
+    f"<script>\n{fieldwork}\n</script>\n"
+    f"<script>\n{guide}\n</script>\n"
+)
 base = base.replace("</body>", body_injection + "</body>", 1)
 
 (ROOT / "index.html").write_text(base, encoding="utf-8", newline="\n")
