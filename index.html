@@ -27,6 +27,11 @@
         sans-serif;
     }
 
+    button,
+    input {
+      font: inherit;
+    }
+
     .container {
       width: min(960px, 100%);
       margin: 0 auto;
@@ -60,19 +65,30 @@
     .search-form {
       display: flex;
       gap: 10px;
-      align-items: stretch;
+      align-items: flex-start;
+    }
+
+    .combo-box {
+      position: relative;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .combo-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
     }
 
     .search-input {
-      min-width: 0;
-      flex: 1;
+      width: 100%;
       height: 52px;
-      padding: 0 16px;
+      padding: 0 52px 0 16px;
       border: 1px solid #cfd4dc;
       border-radius: 12px;
       outline: none;
       background: #ffffff;
-      font: inherit;
+      color: #172033;
       font-size: 16px;
       transition:
         border-color 0.2s,
@@ -84,6 +100,122 @@
       box-shadow: 0 0 0 4px rgba(113, 137, 167, 0.14);
     }
 
+    .dropdown-button {
+      position: absolute;
+      right: 5px;
+      top: 5px;
+      width: 42px;
+      height: 42px;
+      padding: 0;
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      color: #667085;
+      font-size: 18px;
+      cursor: pointer;
+      transition:
+        background 0.2s,
+        color 0.2s;
+    }
+
+    .dropdown-button:hover {
+      background: #f0f3f7;
+      color: #344054;
+    }
+
+    .dropdown-button[aria-expanded="true"] {
+      background: #eef2f6;
+      color: #344054;
+    }
+
+    .dropdown-button[aria-expanded="true"] .dropdown-arrow {
+      transform: rotate(180deg);
+    }
+
+    .dropdown-arrow {
+      display: inline-block;
+      transition: transform 0.2s;
+    }
+
+    .dropdown-panel {
+      position: absolute;
+      z-index: 100;
+      top: calc(100% + 7px);
+      left: 0;
+      right: 0;
+      overflow: hidden;
+      border: 1px solid #d8dee8;
+      border-radius: 13px;
+      background: #ffffff;
+      box-shadow: 0 16px 38px rgba(16, 24, 40, 0.16);
+    }
+
+    .dropdown-panel[hidden] {
+      display: none;
+    }
+
+    .dropdown-info {
+      padding: 10px 13px;
+      border-bottom: 1px solid #edf0f4;
+      background: #f8fafc;
+      color: #667085;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .dropdown-list {
+      max-height: 330px;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: 5px;
+    }
+
+    .region-option {
+      display: flex;
+      width: 100%;
+      min-height: 42px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 9px 11px;
+      border: 0;
+      border-radius: 8px;
+      background: transparent;
+      color: #263244;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .region-option:hover,
+    .region-option.highlighted {
+      background: #edf2f7;
+    }
+
+    .region-option.selected {
+      background: #e9eef4;
+      font-weight: 700;
+    }
+
+    .region-option-name {
+      overflow-wrap: anywhere;
+      line-height: 1.45;
+    }
+
+    .selected-mark {
+      flex: 0 0 auto;
+      color: #5e748f;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .empty-option {
+      padding: 25px 15px;
+      color: #7a8493;
+      text-align: center;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
     .search-button {
       height: 52px;
       padding: 0 22px;
@@ -91,9 +223,9 @@
       border-radius: 12px;
       background: #586f8c;
       color: #ffffff;
-      font: inherit;
       font-weight: 700;
       cursor: pointer;
+      transition: background 0.2s;
     }
 
     .search-button:hover {
@@ -101,7 +233,8 @@
     }
 
     .search-button:disabled,
-    .search-input:disabled {
+    .search-input:disabled,
+    .dropdown-button:disabled {
       cursor: wait;
       opacity: 0.65;
     }
@@ -224,6 +357,7 @@
         flex-direction: column;
       }
 
+      .combo-box,
       .search-button {
         width: 100%;
       }
@@ -251,20 +385,54 @@
 
     <section class="panel">
       <form id="searchForm" class="search-form">
-        <label for="regionInput" hidden>행정구역</label>
+        <div
+          id="comboBox"
+          class="combo-box"
+          role="combobox"
+          aria-haspopup="listbox"
+          aria-expanded="false"
+        >
+          <div class="combo-input-wrap">
+            <label for="regionInput" hidden>행정구역 검색</label>
 
-        <input
-          id="regionInput"
-          class="search-input"
-          type="text"
-          list="regionList"
-          value="서울특별시 서초구 방배동"
-          placeholder="예: 서울특별시 서초구 방배동"
-          autocomplete="off"
-          disabled
-        />
+            <input
+              id="regionInput"
+              class="search-input"
+              type="text"
+              value="서울특별시 서초구 방배3동"
+              placeholder="지역을 입력하거나 목록에서 선택하세요"
+              autocomplete="off"
+              aria-autocomplete="list"
+              aria-controls="regionDropdownList"
+              disabled
+            />
 
-        <datalist id="regionList"></datalist>
+            <button
+              id="dropdownButton"
+              class="dropdown-button"
+              type="button"
+              aria-label="지역 목록 열기"
+              aria-expanded="false"
+              disabled
+            >
+              <span class="dropdown-arrow">▼</span>
+            </button>
+          </div>
+
+          <div
+            id="dropdownPanel"
+            class="dropdown-panel"
+            hidden
+          >
+            <div id="dropdownInfo" class="dropdown-info"></div>
+
+            <div
+              id="regionDropdownList"
+              class="dropdown-list"
+              role="listbox"
+            ></div>
+          </div>
+        </div>
 
         <button
           id="searchButton"
@@ -332,7 +500,8 @@
     const CSV_URL =
       "https://raw.githubusercontent.com/greatsong/modudata/main/data/population_latest.csv";
 
-    const DEFAULT_REGION = "서울특별시 서초구 방배동";
+    const DEFAULT_REGION = "서울특별시 서초구 방배3동";
+    const MAX_VISIBLE_OPTIONS = 400;
 
     const MALE_COLOR = "#7890AC";
     const MALE_BORDER_COLOR = "#5E748F";
@@ -341,9 +510,14 @@
     const FEMALE_BORDER_COLOR = "#98717B";
 
     const searchForm = document.getElementById("searchForm");
+    const comboBox = document.getElementById("comboBox");
     const regionInput = document.getElementById("regionInput");
-    const regionList = document.getElementById("regionList");
+    const dropdownButton = document.getElementById("dropdownButton");
+    const dropdownPanel = document.getElementById("dropdownPanel");
+    const dropdownInfo = document.getElementById("dropdownInfo");
+    const dropdownList = document.getElementById("regionDropdownList");
     const searchButton = document.getElementById("searchButton");
+
     const statusElement = document.getElementById("status");
     const resultElement = document.getElementById("result");
     const regionTitle = document.getElementById("regionTitle");
@@ -354,11 +528,14 @@
     const pyramidChart = document.getElementById("pyramidChart");
 
     const numberFormatter = new Intl.NumberFormat("ko-KR");
-
     const regionMap = new Map();
 
     let regionNames = [];
     let dataPeriod = "";
+    let selectedRegionName = "";
+    let visibleRegionNames = [];
+    let highlightedIndex = -1;
+    let dropdownIsOpen = false;
 
     function parseCSV(text, onRow) {
       let row = [];
@@ -446,41 +623,201 @@
       statusElement.classList.toggle("error", isError);
     }
 
+    function filterRegions(query) {
+      const normalizedQuery = normalizeRegionName(query)
+        .toLocaleLowerCase("ko-KR");
+
+      if (!normalizedQuery) {
+        return [...regionNames];
+      }
+
+      const searchWords = normalizedQuery
+        .split(/\s+/)
+        .filter(Boolean);
+
+      return regionNames.filter((name) => {
+        const normalizedName = normalizeRegionName(name)
+          .toLocaleLowerCase("ko-KR");
+
+        return searchWords.every((word) =>
+          normalizedName.includes(word)
+        );
+      });
+    }
+
+    function renderDropdown(query = "", showFullList = false) {
+      let matches = showFullList
+        ? [...regionNames]
+        : filterRegions(query);
+
+      if (
+        showFullList &&
+        selectedRegionName &&
+        matches.includes(selectedRegionName)
+      ) {
+        matches = [
+          selectedRegionName,
+          ...matches.filter(
+            (name) => name !== selectedRegionName
+          )
+        ];
+      }
+
+      const totalMatches = matches.length;
+
+      visibleRegionNames = matches.slice(
+        0,
+        MAX_VISIBLE_OPTIONS
+      );
+
+      highlightedIndex = -1;
+      dropdownList.replaceChildren();
+
+      if (visibleRegionNames.length === 0) {
+        const emptyMessage = document.createElement("div");
+        emptyMessage.className = "empty-option";
+        emptyMessage.textContent =
+          "일치하는 지역이 없습니다. 다른 검색어를 입력해 주세요.";
+
+        dropdownList.appendChild(emptyMessage);
+        dropdownInfo.textContent = "검색 결과 0개";
+        return;
+      }
+
+      const fragment = document.createDocumentFragment();
+
+      visibleRegionNames.forEach((name, index) => {
+        const option = document.createElement("button");
+
+        option.type = "button";
+        option.className = "region-option";
+        option.dataset.index = String(index);
+        option.setAttribute("role", "option");
+        option.setAttribute(
+          "aria-selected",
+          name === selectedRegionName ? "true" : "false"
+        );
+
+        if (name === selectedRegionName) {
+          option.classList.add("selected");
+        }
+
+        const optionName = document.createElement("span");
+        optionName.className = "region-option-name";
+        optionName.textContent = name;
+
+        option.appendChild(optionName);
+
+        if (name === selectedRegionName) {
+          const selectedMark = document.createElement("span");
+          selectedMark.className = "selected-mark";
+          selectedMark.textContent = "✓";
+
+          option.appendChild(selectedMark);
+        }
+
+        option.addEventListener("mousedown", (event) => {
+          event.preventDefault();
+        });
+
+        option.addEventListener("click", () => {
+          selectRegion(name);
+        });
+
+        fragment.appendChild(option);
+      });
+
+      dropdownList.appendChild(fragment);
+
+      if (totalMatches > MAX_VISIBLE_OPTIONS) {
+        dropdownInfo.textContent =
+          `${numberFormatter.format(totalMatches)}개 지역 중 ` +
+          `${numberFormatter.format(MAX_VISIBLE_OPTIONS)}개를 표시합니다. ` +
+          "검색어를 입력하면 전체 지역에서 찾습니다.";
+      } else {
+        dropdownInfo.textContent =
+          `${numberFormatter.format(totalMatches)}개 지역`;
+      }
+    }
+
+    function openDropdown(showFullList = false) {
+      if (regionInput.disabled) {
+        return;
+      }
+
+      dropdownIsOpen = true;
+      dropdownPanel.hidden = false;
+
+      comboBox.setAttribute("aria-expanded", "true");
+      dropdownButton.setAttribute("aria-expanded", "true");
+
+      renderDropdown(
+        showFullList ? "" : regionInput.value,
+        showFullList
+      );
+    }
+
+    function closeDropdown() {
+      dropdownIsOpen = false;
+      highlightedIndex = -1;
+      dropdownPanel.hidden = true;
+
+      comboBox.setAttribute("aria-expanded", "false");
+      dropdownButton.setAttribute("aria-expanded", "false");
+
+      regionInput.removeAttribute("aria-activedescendant");
+    }
+
+    function updateHighlightedOption() {
+      const options = dropdownList.querySelectorAll(
+        ".region-option"
+      );
+
+      options.forEach((option, index) => {
+        option.classList.toggle(
+          "highlighted",
+          index === highlightedIndex
+        );
+      });
+
+      const highlightedOption = options[highlightedIndex];
+
+      if (highlightedOption) {
+        highlightedOption.id = "highlightedRegionOption";
+
+        regionInput.setAttribute(
+          "aria-activedescendant",
+          highlightedOption.id
+        );
+
+        highlightedOption.scrollIntoView({
+          block: "nearest"
+        });
+      } else {
+        regionInput.removeAttribute("aria-activedescendant");
+      }
+    }
+
+    function selectRegion(name) {
+      selectedRegionName = name;
+      regionInput.value = name;
+
+      closeDropdown();
+      showRegion(name);
+    }
+
     function findSimilarRegions(query) {
-      const normalizedQuery = normalizeRegionName(query);
-      const words = normalizedQuery.split(" ").filter(Boolean);
-      const lastWord = words.at(-1) ?? "";
-      const parentName = words.slice(0, -1).join(" ");
-      const baseName = lastWord.replace(/[읍면동리]$/, "");
-
-      return regionNames
-        .filter((name) => {
-          const normalizedName = normalizeRegionName(name);
-
-          if (normalizedName.includes(normalizedQuery)) {
-            return true;
-          }
-
-          if (!parentName || baseName.length < 2) {
-            return false;
-          }
-
-          const nameWords = normalizedName.split(" ");
-          const nameLastWord = nameWords.at(-1) ?? "";
-          const nameParent = nameWords.slice(0, -1).join(" ");
-
-          return (
-            nameParent === parentName &&
-            nameLastWord.startsWith(baseName)
-          );
-        })
-        .slice(0, 5);
+      return filterRegions(query).slice(0, 5);
     }
 
     function createFiveYearAgeGroups(ageValues) {
       const groups = [];
 
-      for (let startAge = 0; startAge <= 95; startAge += 5) {
+      for (
+        let startAge = 0;
+        startAge <= 95;
+        startAge += 5
+      ) {
         let groupPopulation = 0;
 
         for (
@@ -502,7 +839,11 @@
     function createFiveYearAgeLabels() {
       const labels = [];
 
-      for (let startAge = 0; startAge <= 95; startAge += 5) {
+      for (
+        let startAge = 0;
+        startAge <= 95;
+        startAge += 5
+      ) {
         labels.push(`${startAge}~${startAge + 4}세`);
       }
 
@@ -537,7 +878,9 @@
         step = 10 * magnitude;
       }
 
-      const limit = Math.ceil(maxValue / step) * step;
+      const limit =
+        Math.ceil(maxValue / step) * step;
+
       const tickValues = [];
 
       for (
@@ -552,7 +895,8 @@
     }
 
     function renderPyramid(population) {
-      const ageLabels = createFiveYearAgeLabels();
+      const ageLabels =
+        createFiveYearAgeLabels();
 
       const groupedMale =
         createFiveYearAgeGroups(population.ageMale);
@@ -572,7 +916,8 @@
         1
       );
 
-      const tickValues = buildTickValues(maxValue);
+      const tickValues =
+        buildTickValues(maxValue);
 
       const tickTexts = tickValues.map((value) =>
         numberFormatter.format(Math.abs(value))
@@ -587,6 +932,7 @@
 
         marker: {
           color: MALE_COLOR,
+
           line: {
             color: MALE_BORDER_COLOR,
             width: 0.6
@@ -598,7 +944,9 @@
         ),
 
         hovertemplate:
-          "<b>%{y}</b><br>남자: %{customdata}명<extra></extra>"
+          "<b>%{y}</b><br>" +
+          "남자: %{customdata}명" +
+          "<extra></extra>"
       };
 
       const femaleTrace = {
@@ -610,6 +958,7 @@
 
         marker: {
           color: FEMALE_COLOR,
+
           line: {
             color: FEMALE_BORDER_COLOR,
             width: 0.6
@@ -621,7 +970,9 @@
         ),
 
         hovertemplate:
-          "<b>%{y}</b><br>여자: %{customdata}명<extra></extra>"
+          "<b>%{y}</b><br>" +
+          "여자: %{customdata}명" +
+          "<extra></extra>"
       };
 
       const layout = {
@@ -693,7 +1044,9 @@
 
         font: {
           family:
-            'Pretendard, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
+            'Pretendard, "Noto Sans KR", ' +
+            '"Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
+
           color: "#172033"
         },
 
@@ -720,41 +1073,39 @@
     }
 
     function showRegion(query) {
-      const normalizedQuery = normalizeRegionName(query);
+      const normalizedQuery =
+        normalizeRegionName(query);
 
-      if (!normalizedQuery) {
-        resultElement.hidden = true;
-        setStatus("검색할 지역을 입력해 주세요.", true);
-        return;
-      }
-
-      const population = regionMap.get(normalizedQuery);
+      const population =
+        regionMap.get(normalizedQuery);
 
       if (!population) {
-        resultElement.hidden = true;
-
-        if (window.Plotly) {
-          Plotly.purge(pyramidChart);
-        }
-
-        const suggestions = findSimilarRegions(normalizedQuery);
+        const suggestions =
+          findSimilarRegions(normalizedQuery);
 
         if (suggestions.length > 0) {
           setStatus(
-            `일치하는 지역이 없습니다. 다음 지역을 확인해 보세요: ${suggestions.join(", ")}`,
-            true
+            "정확히 일치하는 지역이 없습니다. " +
+            "아래 목록에서 지역을 선택해 주세요."
           );
+
+          openDropdown(false);
         } else {
           setStatus(
-            "입력한 지역을 찾을 수 없습니다. 목록에서 정확한 행정구역을 선택해 주세요.",
+            "입력한 지역을 찾을 수 없습니다. " +
+            "다른 검색어를 입력해 주세요.",
             true
           );
+
+          openDropdown(false);
         }
 
         return;
       }
 
+      selectedRegionName = population.name;
       regionInput.value = population.name;
+
       regionTitle.textContent = population.name;
 
       periodElement.textContent = dataPeriod
@@ -779,19 +1130,6 @@
       renderPyramid(population);
     }
 
-    function createRegionOptions() {
-      const fragment = document.createDocumentFragment();
-
-      for (const name of regionNames) {
-        const option = document.createElement("option");
-        option.value = name;
-
-        fragment.appendChild(option);
-      }
-
-      regionList.replaceChildren(fragment);
-    }
-
     async function loadPopulationData() {
       try {
         const response = await fetch(CSV_URL, {
@@ -804,7 +1142,8 @@
           );
         }
 
-        const arrayBuffer = await response.arrayBuffer();
+        const arrayBuffer =
+          await response.arrayBuffer();
 
         const csvText = new TextDecoder(
           "euc-kr"
@@ -817,69 +1156,57 @@
 
         parseCSV(csvText, (row) => {
           if (!headers) {
-            headers = row.map((header, index) => {
-              const cleanedHeader =
-                String(header ?? "").trim();
+            headers = row.map(
+              (header, index) => {
+                const cleanedHeader =
+                  String(header ?? "").trim();
 
-              return index === 0
-                ? cleanedHeader.replace(/^\uFEFF/, "")
-                : cleanedHeader;
-            });
+                return index === 0
+                  ? cleanedHeader.replace(
+                      /^\uFEFF/,
+                      ""
+                    )
+                  : cleanedHeader;
+              }
+            );
 
             headers.forEach((header, index) => {
-              const maleMatch = header.match(
-                /^(\d{4}년\d{1,2}월)_남_(\d+)세$/
+              const ageMatch = header.match(
+                /^(\d{4}년\d{1,2}월)_(남|여)_(\d+)세(?:\s*이상)?$/
               );
 
-              const femaleMatch = header.match(
-                /^(\d{4}년\d{1,2}월)_여_(\d+)세$/
-              );
-
-              const male100PlusMatch = header.match(
-                /^(\d{4}년\d{1,2}월)_남_100세\s*이상$/
-              );
-
-              const female100PlusMatch = header.match(
-                /^(\d{4}년\d{1,2}월)_여_100세\s*이상$/
-              );
-
-              if (!dataPeriod) {
-                const periodMatch = header.match(
-                  /^(\d{4}년\d{1,2}월)_/
-                );
-
-                if (periodMatch) {
-                  dataPeriod = periodMatch[1];
-                }
+              if (!ageMatch) {
+                return;
               }
 
-              if (maleMatch) {
-                const age = Number(maleMatch[2]);
+              if (!dataPeriod) {
+                dataPeriod = ageMatch[1];
+              }
 
-                if (age >= 0 && age <= 100) {
-                  maleAgeColumns.push({
-                    index,
-                    age
-                  });
-                }
-              } else if (femaleMatch) {
-                const age = Number(femaleMatch[2]);
+              const gender = ageMatch[2];
 
-                if (age >= 0 && age <= 100) {
-                  femaleAgeColumns.push({
-                    index,
-                    age
-                  });
-                }
-              } else if (male100PlusMatch) {
+              const age = Math.min(
+                Number(ageMatch[3]),
+                100
+              );
+
+              if (
+                !Number.isInteger(age) ||
+                age < 0 ||
+                age > 100
+              ) {
+                return;
+              }
+
+              if (gender === "남") {
                 maleAgeColumns.push({
                   index,
-                  age: 100
+                  age
                 });
-              } else if (female100PlusMatch) {
+              } else {
                 femaleAgeColumns.push({
                   index,
-                  age: 100
+                  age
                 });
               }
             });
@@ -890,29 +1217,42 @@
           if (
             !row.length ||
             row.every(
-              (value) => String(value).trim() === ""
+              (value) =>
+                String(value).trim() === ""
             )
           ) {
             return;
           }
 
-          const name = cleanRegionName(row[0]);
+          const name =
+            cleanRegionName(row[0]);
 
           if (!name) {
             return;
           }
 
-          const ageMale = Array(101).fill(0);
-          const ageFemale = Array(101).fill(0);
+          const ageMale =
+            Array(101).fill(0);
 
-          for (const column of maleAgeColumns) {
+          const ageFemale =
+            Array(101).fill(0);
+
+          for (
+            const column of maleAgeColumns
+          ) {
             ageMale[column.age] +=
-              parsePopulationNumber(row[column.index]);
+              parsePopulationNumber(
+                row[column.index]
+              );
           }
 
-          for (const column of femaleAgeColumns) {
+          for (
+            const column of femaleAgeColumns
+          ) {
             ageFemale[column.age] +=
-              parsePopulationNumber(row[column.index]);
+              parsePopulationNumber(
+                row[column.index]
+              );
           }
 
           const male = ageMale.reduce(
@@ -925,14 +1265,17 @@
             0
           );
 
-          regionMap.set(normalizeRegionName(name), {
-            name,
-            male,
-            female,
-            total: male + female,
-            ageMale,
-            ageFemale
-          });
+          regionMap.set(
+            normalizeRegionName(name),
+            {
+              name,
+              male,
+              female,
+              total: male + female,
+              ageMale,
+              ageFemale
+            }
+          );
         });
 
         if (!headers) {
@@ -950,27 +1293,42 @@
           );
         }
 
-        regionNames = Array.from(regionMap.values())
+        regionNames = Array.from(
+          regionMap.values()
+        )
           .map((item) => item.name)
           .sort((a, b) =>
             a.localeCompare(b, "ko-KR")
           );
 
-        createRegionOptions();
-
         regionInput.disabled = false;
+        dropdownButton.disabled = false;
         searchButton.disabled = false;
+
         regionInput.value = DEFAULT_REGION;
 
-        setStatus(
-          `${numberFormatter.format(regionNames.length)}개 행정구역을 불러왔습니다.`
-        );
+        const defaultPopulation =
+          regionMap.get(
+            normalizeRegionName(DEFAULT_REGION)
+          );
 
-        showRegion(DEFAULT_REGION);
+        if (defaultPopulation) {
+          selectRegion(
+            defaultPopulation.name
+          );
+        } else {
+          setStatus(
+            `${numberFormatter.format(regionNames.length)}개 지역을 불러왔습니다. ` +
+            "목록에서 지역을 선택해 주세요."
+          );
+
+          openDropdown(true);
+        }
       } catch (error) {
         console.error(error);
 
         regionInput.disabled = true;
+        dropdownButton.disabled = true;
         searchButton.disabled = true;
         resultElement.hidden = true;
 
@@ -979,19 +1337,175 @@
         }
 
         setStatus(
-          "인구 데이터를 불러오지 못했습니다. 인터넷 연결이나 CSV 주소를 확인해 주세요.",
+          "인구 데이터를 불러오지 못했습니다. " +
+          "인터넷 연결이나 CSV 주소를 확인해 주세요.",
           true
         );
       }
     }
 
-    searchForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-      showRegion(regionInput.value);
+    regionInput.addEventListener("focus", () => {
+      const isCurrentSelection =
+        regionInput.value === selectedRegionName;
+
+      openDropdown(isCurrentSelection);
     });
 
-    regionInput.addEventListener("change", () => {
-      showRegion(regionInput.value);
+    regionInput.addEventListener("click", () => {
+      const isCurrentSelection =
+        regionInput.value === selectedRegionName;
+
+      openDropdown(isCurrentSelection);
+    });
+
+    regionInput.addEventListener("input", () => {
+      openDropdown(false);
+    });
+
+    regionInput.addEventListener(
+      "keydown",
+      (event) => {
+        if (event.key === "ArrowDown") {
+          event.preventDefault();
+
+          if (!dropdownIsOpen) {
+            openDropdown(false);
+          }
+
+          if (visibleRegionNames.length > 0) {
+            highlightedIndex = Math.min(
+              highlightedIndex + 1,
+              visibleRegionNames.length - 1
+            );
+
+            updateHighlightedOption();
+          }
+
+          return;
+        }
+
+        if (event.key === "ArrowUp") {
+          event.preventDefault();
+
+          if (!dropdownIsOpen) {
+            openDropdown(false);
+          }
+
+          if (visibleRegionNames.length > 0) {
+            highlightedIndex =
+              highlightedIndex <= 0
+                ? visibleRegionNames.length - 1
+                : highlightedIndex - 1;
+
+            updateHighlightedOption();
+          }
+
+          return;
+        }
+
+        if (event.key === "Enter") {
+          if (
+            dropdownIsOpen &&
+            highlightedIndex >= 0 &&
+            visibleRegionNames[highlightedIndex]
+          ) {
+            event.preventDefault();
+
+            selectRegion(
+              visibleRegionNames[
+                highlightedIndex
+              ]
+            );
+          }
+
+          return;
+        }
+
+        if (event.key === "Escape") {
+          closeDropdown();
+        }
+      }
+    );
+
+    dropdownButton.addEventListener(
+      "click",
+      () => {
+        if (dropdownIsOpen) {
+          closeDropdown();
+        } else {
+          regionInput.focus();
+          openDropdown(true);
+        }
+      }
+    );
+
+    searchForm.addEventListener(
+      "submit",
+      (event) => {
+        event.preventDefault();
+
+        const normalizedQuery =
+          normalizeRegionName(
+            regionInput.value
+          );
+
+        const exactPopulation =
+          regionMap.get(normalizedQuery);
+
+        if (exactPopulation) {
+          selectRegion(
+            exactPopulation.name
+          );
+
+          return;
+        }
+
+        const matches =
+          filterRegions(regionInput.value);
+
+        if (matches.length === 1) {
+          selectRegion(matches[0]);
+          return;
+        }
+
+        if (matches.length > 1) {
+          setStatus(
+            `${numberFormatter.format(matches.length)}개 지역이 검색되었습니다. ` +
+            "목록에서 하나를 선택해 주세요."
+          );
+
+          openDropdown(false);
+          return;
+        }
+
+        setStatus(
+          "입력한 지역을 찾을 수 없습니다. " +
+          "다른 검색어를 입력해 주세요.",
+          true
+        );
+
+        openDropdown(false);
+      }
+    );
+
+    document.addEventListener(
+      "mousedown",
+      (event) => {
+        if (!comboBox.contains(event.target)) {
+          closeDropdown();
+        }
+      }
+    );
+
+    window.addEventListener("resize", () => {
+      if (
+        !resultElement.hidden &&
+        window.Plotly
+      ) {
+        Plotly.Plots.resize(
+          pyramidChart
+        );
+      }
     });
 
     loadPopulationData();
