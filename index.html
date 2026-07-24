@@ -423,13 +423,24 @@
     }
     .map-title { margin: 0; font-size: clamp(22px, 3.2vw, 30px); letter-spacing: -.045em; }
     .map-copy { max-width: 760px; margin: 7px 0 0; color: var(--muted); font-size: 13px; font-weight: 650; line-height: 1.7; }
-    .map-view-buttons { display: flex; flex-wrap: wrap; gap: 7px; justify-content: flex-end; }
+    .map-view-buttons { display: flex; flex-wrap: wrap; gap: 7px; justify-content: flex-end; align-items: center; }
     .map-view-button {
-      min-height: 37px; padding: 0 13px; border: 1px solid var(--border-strong); border-radius: 999px;
+      min-height: 39px; padding: 0 13px; border: 1px solid var(--border-strong); border-radius: 999px;
       background: var(--surface-solid); color: var(--muted); font-size: 12px; font-weight: 900; cursor: pointer;
     }
-    .map-view-button:hover { background: var(--surface-hover); color: var(--text); }
+    .map-view-button:hover:not(:disabled) { background: var(--surface-hover); color: var(--text); }
     .map-view-button.active { border-color: var(--primary); background: var(--primary); color: #fff; box-shadow: 0 5px 14px var(--focus); }
+    .map-view-button:disabled { cursor: not-allowed; opacity: .5; }
+    .province-view-select {
+      min-height: 39px; max-width: 190px; padding: 0 34px 0 12px;
+      border: 1px solid var(--border-strong); border-radius: 999px; outline: none;
+      background: var(--surface-solid); color: var(--muted); font-size: 12px; font-weight: 900; cursor: pointer;
+    }
+    .province-view-select:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--focus); }
+    .map-view-note {
+      flex-basis: 100%; margin: 2px 0 0; color: var(--faint); text-align: right;
+      font-size: 10px; font-weight: 700; line-height: 1.5;
+    }
 
     .map-controls {
       display: flex; flex-wrap: wrap; align-items: end; gap: 10px; margin-bottom: 15px; padding: 13px;
@@ -463,7 +474,10 @@
       background: linear-gradient(150deg, var(--surface-solid), var(--surface-soft));
     }
     .map-svg-wrap { position: relative; width: 100%; min-height: 560px; overflow: hidden; border-radius: 16px; }
-    .korea-map { display: block; width: 100%; min-height: 560px; touch-action: manipulation; }
+    .korea-map {
+      display: block; width: 100%; height: auto; min-height: 560px;
+      touch-action: manipulation; overflow: visible;
+    }
     .map-shape {
       stroke: color-mix(in srgb, var(--text) 40%, transparent); stroke-width: .55;
       vector-effect: non-scaling-stroke; cursor: pointer; transition: filter .14s ease, opacity .14s ease, stroke-width .14s ease;
@@ -564,7 +578,9 @@
       .search-row { grid-template-columns: 1fr; }
       .add-button { width: 100%; }
       .selection-head, .section-head, .map-head { align-items: flex-start; flex-direction: column; gap: 6px; }
-      .map-view-buttons { justify-content: flex-start; }
+      .map-view-buttons { justify-content: flex-start; width: 100%; }
+      .province-view-select { flex: 1 1 180px; max-width: 100%; }
+      .map-view-note { text-align: left; }
       .map-controls { align-items: stretch; }
       .map-control, .map-select { width: 100%; min-width: 0; }
       .top10-toggle { width: 100%; margin-left: 0; justify-content: center; }
@@ -662,8 +678,15 @@
             </div>
 
             <div class="map-view-buttons" aria-label="지도 보기 범위">
-              <button class="map-view-button active" type="button" data-map-view="nation">전국 보기</button>
-              <button class="map-view-button" type="button" data-map-view="seoul">서울특별시 확대</button>
+              <button id="nationViewButton" class="map-view-button active" type="button" data-map-view="nation">전국 보기</button>
+              <button id="selectedProvinceButton" class="map-view-button" type="button" data-map-view="selected-province" disabled>선택 시·도 확대</button>
+              <label>
+                <span hidden>시·도 직접 선택</span>
+                <select id="provinceViewSelect" class="province-view-select" aria-label="확대할 시·도 선택" disabled>
+                  <option value="">시·도 직접 선택</option>
+                </select>
+              </label>
+              <p class="map-view-note">전국 비교 기준은 유지한 채, 원하는 시·도 내부 분포를 자세히 볼 수 있습니다.</p>
             </div>
           </header>
 
@@ -930,6 +953,15 @@
     const bottom5List = document.getElementById("bottom5List");
     const mapTooltip = document.getElementById("mapTooltip");
     const mapViewButtons = document.querySelectorAll(".map-view-button");
+    const nationViewButton = document.getElementById("nationViewButton");
+    const selectedProvinceButton = document.getElementById("selectedProvinceButton");
+    const provinceViewSelect = document.getElementById("provinceViewSelect");
+
+    const PROVINCE_ORDER = Object.freeze([
+      "서울특별시", "부산광역시", "대구광역시", "인천광역시", "광주광역시", "대전광역시", "울산광역시",
+      "세종특별자치시", "경기도", "강원특별자치도", "충청북도", "충청남도", "전북특별자치도",
+      "전라남도", "경상북도", "경상남도", "제주특별자치도"
+    ]);
 
     const MAP_METRICS = Object.freeze({
       aging: { label: "고령화율", start: 65, end: 100, explanation: "65세 이상 인구가 총인구에서 차지하는 비율" },
@@ -956,6 +988,7 @@
     const mapPathsByName = new Map();
     let mapMeta = {};
     let mapView = "nation";
+    let mapProvince = "";
     let mapMetricKey = "aging";
     let mapRanking = [];
     let mapRankingByName = new Map();
@@ -1199,8 +1232,11 @@
         region.rings.push(...extractCoordinateRings(entry.p));
       });
 
+      populateProvinceViewSelect();
       mapMetricSelect.disabled = false;
+      provinceViewSelect.disabled = false;
       mapLoading.hidden = true;
+      updateMapViewControls();
       renderMapAnalytics();
     }
 
@@ -1227,19 +1263,62 @@
       return ranking;
     }
 
+    function availableMapProvinces() {
+      const found = new Set(Array.from(mapRegions.keys()).map(provinceName));
+      return [
+        ...PROVINCE_ORDER.filter(name => found.has(name)),
+        ...Array.from(found).filter(name => !PROVINCE_ORDER.includes(name)).sort((a, b) => a.localeCompare(b, "ko-KR"))
+      ];
+    }
+
+    function populateProvinceViewSelect() {
+      const currentValue = provinceViewSelect.value;
+      provinceViewSelect.replaceChildren();
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "시·도 직접 선택";
+      provinceViewSelect.appendChild(placeholder);
+      availableMapProvinces().forEach(name => {
+        const option = document.createElement("option");
+        option.value = name;
+        option.textContent = `${name} 확대`;
+        provinceViewSelect.appendChild(option);
+      });
+      provinceViewSelect.value = availableMapProvinces().includes(currentValue) ? currentValue : "";
+    }
+
+    function selectedProvinceForMap() {
+      const activeSelected = selectedNames.at(-1);
+      if (!activeSelected) return "";
+      const mappedNames = mapRegionNamesForSelection(activeSelected);
+      return mappedNames.length ? provinceName(mappedNames[0]) : provinceName(activeSelected);
+    }
+
+    function updateMapViewControls() {
+      const selectedProvince = selectedProvinceForMap();
+      selectedProvinceButton.disabled = !selectedProvince || !mapRegions.size;
+      selectedProvinceButton.textContent = selectedProvince ? `${selectedProvince} 확대` : "선택 시·도 확대";
+      nationViewButton.classList.toggle("active", mapView === "nation");
+      selectedProvinceButton.classList.toggle(
+        "active",
+        mapView === "province" && Boolean(selectedProvince) && mapProvince === selectedProvince
+      );
+      provinceViewSelect.value = mapView === "province" ? mapProvince : "";
+    }
+
     function visibleMapRegions() {
       const regions = Array.from(mapRegions.values());
-      return mapView === "seoul"
-        ? regions.filter(region => region.name.startsWith("서울특별시 "))
-        : regions;
+      if (mapView !== "province" || !mapProvince) return regions;
+      return regions.filter(region => provinceName(region.name) === mapProvince);
     }
 
     function mercatorPoint(point) {
       const longitude = Number(point?.[0]);
       const latitude = clamp(Number(point?.[1]), -85, 85);
       if (!Number.isFinite(longitude) || !Number.isFinite(latitude)) return null;
+      const longitudeRadians = longitude * Math.PI / 180;
       const latitudeRadians = latitude * Math.PI / 180;
-      return [longitude, Math.log(Math.tan(Math.PI / 4 + latitudeRadians / 2))];
+      return [longitudeRadians, Math.log(Math.tan(Math.PI / 4 + latitudeRadians / 2))];
     }
 
     function mapColor(value, minValue, maxValue) {
@@ -1263,9 +1342,10 @@
         });
       });
 
-      const outputWidth = 720;
-      const outputHeight = mapView === "seoul" ? 610 : 850;
-      const padding = mapView === "seoul" ? 27 : 20;
+      const isProvinceView = mapView === "province" && Boolean(mapProvince);
+      const outputWidth = 760;
+      const outputHeight = isProvinceView ? 640 : 900;
+      const padding = isProvinceView ? 34 : 25;
 
       if (!projectedPoints.length) {
         return {
@@ -1364,7 +1444,13 @@
       const regions = visibleMapRegions();
       const projection = createProjection(regions);
       koreaMap.setAttribute("viewBox", `0 0 ${projection.width} ${projection.height}`);
-      koreaMap.setAttribute("aria-label", mapView === "seoul" ? "서울특별시 자치구 인구 지표 지도" : "전국 시군구 인구 지표 지도");
+      koreaMap.setAttribute("preserveAspectRatio", "xMidYMid meet");
+      koreaMap.setAttribute(
+        "aria-label",
+        mapView === "province" && mapProvince
+          ? `${mapProvince} 시군구 인구 지표 확대 지도`
+          : "전국 시군구 인구 지표 지도"
+      );
       koreaMap.style.aspectRatio = `${projection.width} / ${projection.height}`;
       koreaMap.replaceChildren();
       mapPathsByName.clear();
@@ -1505,9 +1591,17 @@
       if (!dashboard.hidden) renderInquiry(selectedPopulations());
     }
 
-    function setMapView(view) {
-      mapView = view === "seoul" ? "seoul" : "nation";
-      mapViewButtons.forEach(button => button.classList.toggle("active", button.dataset.mapView === mapView));
+    function setMapView(view, province = "") {
+      if (view === "province") {
+        const targetProvince = province || selectedProvinceForMap() || mapProvince;
+        if (!targetProvince || !availableMapProvinces().includes(targetProvince)) return;
+        mapView = "province";
+        mapProvince = targetProvince;
+      } else {
+        mapView = "nation";
+        mapProvince = "";
+      }
+      updateMapViewControls();
       renderMap();
     }
 
@@ -1538,16 +1632,17 @@
     }
 
     function ensureSelectedRegionVisibleOnMap(name) {
-      if (mapView !== "seoul") return;
+      if (mapView !== "province") return;
       const mapNames = mapRegionNamesForSelection(name);
-      if (mapNames.some(mapName => !mapName.startsWith("서울특별시 "))) setMapView("nation");
+      const targetProvince = mapNames.length ? provinceName(mapNames[0]) : provinceName(name);
+      if (targetProvince && targetProvince !== mapProvince) setMapView("province", targetProvince);
     }
 
     function focusRegionFromMap(name) {
       const population = regionMap.get(normalizeRegionName(name));
       if (!population) return;
-      if (mapView === "seoul" && !name.startsWith("서울특별시 ")) setMapView("nation");
       selectedNames = [population.name];
+      if (mapView === "province") setMapView("province", provinceName(name));
       regionInput.value = "";
       closeDropdown();
       renderAll();
@@ -2051,6 +2146,7 @@
 
     function renderAll() {
       renderSelectedChips();
+      updateMapViewControls();
       const populations = selectedPopulations();
       dashboard.hidden = !populations.length;
       if (!populations.length) return;
@@ -2156,7 +2252,14 @@
     customStartAge.addEventListener("change", handleCustomAgeChange);
     customEndAge.addEventListener("change", handleCustomAgeChange);
     top10Toggle.addEventListener("change", renderTop10Chart);
-    mapViewButtons.forEach(button => button.addEventListener("click", () => setMapView(button.dataset.mapView)));
+    mapViewButtons.forEach(button => button.addEventListener("click", () => {
+      if (button.dataset.mapView === "nation") setMapView("nation");
+      else if (button.dataset.mapView === "selected-province") setMapView("province", selectedProvinceForMap());
+    }));
+    provinceViewSelect.addEventListener("change", () => {
+      if (provinceViewSelect.value) setMapView("province", provinceViewSelect.value);
+      else setMapView("nation");
+    });
 
     regionInput.addEventListener("focus", () => openDropdown(!regionInput.value));
     regionInput.addEventListener("click", () => openDropdown(!regionInput.value));
