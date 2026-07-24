@@ -112,6 +112,78 @@
       --focus: rgba(182, 109, 129, 0.19);
     }
 
+    /* 목화 보라: 공식 목화 교표 이미지의 회보라·흰색·초록 배색에서 착안한 테마 */
+    :root[data-theme="cotton"] {
+      --page: #f7f3f9;
+      --page-2: #ddd0e5;
+      --surface: rgba(254, 252, 255, 0.95);
+      --surface-solid: #fefcff;
+      --surface-soft: #f3edf6;
+      --surface-hover: #e9dfee;
+      --text: #403447;
+      --muted: #75657c;
+      --faint: #9d8fa3;
+      --primary: #80638f;
+      --primary-dark: #61486e;
+      --primary-soft: #dfd1e6;
+      --border: #e5dbe8;
+      --border-strong: #cdbdd3;
+      --shadow: 0 22px 55px rgba(97, 72, 110, 0.13), 0 4px 15px rgba(97, 72, 110, 0.06);
+      --shadow-soft: 0 10px 28px rgba(97, 72, 110, 0.10);
+      --male: #748fa2;
+      --male-dark: #586f80;
+      --male-soft: #ebf1f4;
+      --female: #b68e9e;
+      --female-dark: #916c7b;
+      --female-soft: #f7edf1;
+      --danger: #bd4f5e;
+      --danger-dark: #913744;
+      --danger-soft: #ffedef;
+      --good: #708b71;
+      --good-soft: #eef6ee;
+      --warning: #a7835d;
+      --warning-soft: #fff4e9;
+      --grid: rgba(117, 101, 124, 0.17);
+      --zero: #8b7b92;
+      --focus: rgba(128, 99, 143, 0.20);
+    }
+
+    /* 크림슨 레드: Pantone 202C 계열을 화면용으로 조정한 테마 */
+    :root[data-theme="crimson"] {
+      --page: #fbf1f3;
+      --page-2: #e7c1c9;
+      --surface: rgba(255, 251, 252, 0.95);
+      --surface-solid: #fffafb;
+      --surface-soft: #f9ecef;
+      --surface-hover: #f2dce2;
+      --text: #452a31;
+      --muted: #7d5f67;
+      --faint: #a48b91;
+      --primary: #862633;
+      --primary-dark: #651923;
+      --primary-soft: #e8c7ce;
+      --border: #ead3d8;
+      --border-strong: #d7b2ba;
+      --shadow: 0 22px 55px rgba(134, 38, 51, 0.13), 0 4px 15px rgba(134, 38, 51, 0.06);
+      --shadow-soft: 0 10px 28px rgba(134, 38, 51, 0.10);
+      --male: #788fa8;
+      --male-dark: #5a718b;
+      --male-soft: #edf2f7;
+      --female: #bc7f8c;
+      --female-dark: #985e6b;
+      --female-soft: #f9e9ed;
+      --danger: #c83843;
+      --danger-dark: #961f2a;
+      --danger-soft: #ffebed;
+      --good: #64836d;
+      --good-soft: #eef6f0;
+      --warning: #a8794d;
+      --warning-soft: #fff3e6;
+      --grid: rgba(134, 38, 51, 0.15);
+      --zero: #92737a;
+      --focus: rgba(134, 38, 51, 0.20);
+    }
+
     * { box-sizing: border-box; }
     html { min-width: 320px; }
     body {
@@ -133,13 +205,14 @@
 
     .toolbar { display: flex; justify-content: flex-end; margin-bottom: 14px; }
     .theme-switcher {
-      display: inline-flex; gap: 5px; padding: 6px;
-      border: 1px solid var(--border); border-radius: 999px;
+      display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 5px; padding: 6px;
+      max-width: 100%; border: 1px solid var(--border); border-radius: 999px;
       background: var(--surface); box-shadow: var(--shadow-soft); backdrop-filter: blur(14px);
     }
     .theme-button {
       min-height: 38px; padding: 0 13px; border: 0; border-radius: 999px;
-      background: transparent; color: var(--muted); font-size: 14px; font-weight: 850; cursor: pointer;
+      background: transparent; color: var(--muted); font-size: 14px; font-weight: 850;
+      white-space: nowrap; cursor: pointer;
     }
     .theme-button:hover { background: var(--surface-hover); color: var(--text); }
     .theme-button[aria-pressed="true"] { background: var(--primary); color: #fff; box-shadow: 0 5px 15px var(--focus); }
@@ -340,20 +413,162 @@
     }
     .notice strong { color: var(--text); }
 
+    .map-card {
+      position: relative; z-index: 8; margin-top: 25px; padding: clamp(18px, 3vw, 27px);
+      border: 1px solid var(--border); border-radius: 27px; background: var(--surface);
+      box-shadow: var(--shadow); backdrop-filter: blur(14px);
+    }
+    .map-head {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; margin-bottom: 15px;
+    }
+    .map-title { margin: 0; font-size: clamp(22px, 3.2vw, 30px); letter-spacing: -.045em; }
+    .map-copy { max-width: 760px; margin: 7px 0 0; color: var(--muted); font-size: 13px; font-weight: 650; line-height: 1.7; }
+    .map-view-buttons { display: flex; flex-wrap: wrap; gap: 7px; justify-content: flex-end; }
+    .map-view-button {
+      min-height: 37px; padding: 0 13px; border: 1px solid var(--border-strong); border-radius: 999px;
+      background: var(--surface-solid); color: var(--muted); font-size: 12px; font-weight: 900; cursor: pointer;
+    }
+    .map-view-button:hover { background: var(--surface-hover); color: var(--text); }
+    .map-view-button.active { border-color: var(--primary); background: var(--primary); color: #fff; box-shadow: 0 5px 14px var(--focus); }
+
+    .map-controls {
+      display: flex; flex-wrap: wrap; align-items: end; gap: 10px; margin-bottom: 15px; padding: 13px;
+      border: 1px solid var(--border); border-radius: 18px; background: var(--surface-soft);
+    }
+    .map-control { display: grid; gap: 6px; min-width: min(100%, 245px); }
+    .map-control.compact { min-width: 86px; }
+    .map-control-label { color: var(--muted); font-size: 11px; font-weight: 900; }
+    .map-select, .age-input {
+      height: 43px; border: 1px solid var(--border-strong); border-radius: 12px; outline: none;
+      background: var(--surface-solid); color: var(--text); font-weight: 750;
+    }
+    .map-select { min-width: min(100%, 310px); padding: 0 37px 0 12px; cursor: pointer; }
+    .age-input { width: 86px; padding: 0 10px; }
+    .map-select:focus, .age-input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px var(--focus); }
+    .custom-age-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 8px; }
+    .custom-age-controls[hidden] { display: none; }
+    .age-separator { align-self: center; padding-top: 19px; color: var(--muted); font-weight: 900; }
+    .top10-toggle {
+      display: inline-flex; align-items: center; gap: 8px; min-height: 43px; margin-left: auto; padding: 0 13px;
+      border: 1px solid var(--border-strong); border-radius: 12px; background: var(--surface-solid);
+      color: var(--muted); font-size: 12px; font-weight: 900; cursor: pointer;
+    }
+    .top10-toggle input { width: 17px; height: 17px; accent-color: var(--primary); }
+    .map-indicator-note { width: 100%; margin: 0; color: var(--muted); font-size: 11px; font-weight: 650; line-height: 1.6; }
+
+    .map-main { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(270px, .55fr); gap: 15px; align-items: stretch; }
+    .map-main.top10-hidden { grid-template-columns: 1fr; }
+    .map-stage {
+      min-width: 0; padding: 12px; border: 1px solid var(--border); border-radius: 21px;
+      background: linear-gradient(150deg, var(--surface-solid), var(--surface-soft));
+    }
+    .map-svg-wrap { position: relative; width: 100%; min-height: 560px; overflow: hidden; border-radius: 16px; }
+    .korea-map { display: block; width: 100%; min-height: 560px; touch-action: manipulation; }
+    .map-shape {
+      stroke: color-mix(in srgb, var(--text) 40%, transparent); stroke-width: .55;
+      vector-effect: non-scaling-stroke; cursor: pointer; transition: filter .14s ease, opacity .14s ease, stroke-width .14s ease;
+      outline: none;
+    }
+    .map-shape:hover, .map-shape.hovered, .map-shape:focus-visible {
+      filter: brightness(1.13) saturate(1.06); stroke: var(--text); stroke-width: 1.35;
+    }
+    .map-shape.no-data { fill: color-mix(in srgb, var(--border) 72%, #d8d8d8); opacity: .75; }
+    .map-shape.selected-primary {
+      stroke: var(--primary-dark); stroke-width: 2.2; animation: selectedMapPulse 1.35s ease-in-out infinite;
+    }
+    .map-shape.selected-secondary {
+      stroke: var(--male-dark); stroke-width: 2.2; animation: selectedMapPulseSecondary 1.35s ease-in-out infinite;
+    }
+    @keyframes selectedMapPulse {
+      0%, 100% { filter: brightness(1.02) drop-shadow(0 0 1px var(--primary)); }
+      50% { filter: brightness(1.25) drop-shadow(0 0 8px var(--primary)); }
+    }
+    @keyframes selectedMapPulseSecondary {
+      0%, 100% { filter: brightness(1.02) drop-shadow(0 0 1px var(--male-dark)); }
+      50% { filter: brightness(1.22) drop-shadow(0 0 8px var(--male-dark)); }
+    }
+    .map-loading {
+      position: absolute; inset: 0; display: grid; place-items: center; padding: 20px;
+      background: color-mix(in srgb, var(--surface-solid) 88%, transparent); color: var(--muted);
+      text-align: center; font-size: 13px; font-weight: 850; line-height: 1.65;
+    }
+    .map-loading[hidden] { display: none; }
+    .map-legend {
+      position: absolute; right: 10px; bottom: 10px; display: grid; grid-template-columns: auto 112px auto;
+      align-items: center; gap: 7px; padding: 8px 9px; border: 1px solid var(--border); border-radius: 12px;
+      background: color-mix(in srgb, var(--surface-solid) 91%, transparent); box-shadow: var(--shadow-soft);
+      color: var(--muted); font-size: 10px; font-weight: 850; backdrop-filter: blur(10px);
+    }
+    .legend-gradient { height: 10px; border-radius: 999px; background: linear-gradient(90deg, #fff7df, #d65c1c); }
+    .map-caption { margin: 10px 3px 0; color: var(--faint); font-size: 10px; font-weight: 650; line-height: 1.6; }
+
+    .top10-panel {
+      min-width: 0; padding: 16px; border: 1px solid var(--border); border-radius: 21px;
+      background: var(--surface-solid); box-shadow: var(--shadow-soft);
+    }
+    .top10-panel[hidden] { display: none; }
+    .top10-title { margin: 0; font-size: 16px; letter-spacing: -.025em; }
+    .top10-copy { margin: 5px 0 13px; color: var(--muted); font-size: 11px; font-weight: 650; line-height: 1.55; }
+    .top10-bars { display: grid; gap: 8px; }
+    .bar-rank-button {
+      width: 100%; padding: 0; border: 0; background: transparent; color: var(--text); text-align: left; cursor: pointer;
+    }
+    .bar-rank-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+    .bar-rank-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; font-weight: 850; }
+    .bar-rank-value { flex: 0 0 auto; color: var(--muted); font-size: 10px; font-weight: 900; }
+    .bar-track { height: 11px; overflow: hidden; border-radius: 999px; background: var(--surface-hover); }
+    .bar-fill { height: 100%; min-width: 4px; border-radius: inherit; background: linear-gradient(90deg, #f5c979, #d65c1c); }
+    .bar-rank-button:hover .bar-fill { filter: brightness(1.07) saturate(1.08); }
+    .bar-rank-button:hover .bar-rank-name { color: var(--primary-dark); }
+
+    .extreme-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+    .extreme-card { padding: 15px; border: 1px solid var(--border); border-radius: 19px; background: var(--surface-solid); }
+    .extreme-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 9px; font-size: 14px; }
+    .extreme-scope { color: var(--faint); font-size: 10px; font-weight: 800; }
+    .ranking-list { display: grid; gap: 6px; }
+    .ranking-button {
+      display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; gap: 8px; width: 100%;
+      min-height: 39px; padding: 7px 9px; border: 1px solid transparent; border-radius: 11px;
+      background: var(--surface-soft); color: var(--text); text-align: left; cursor: pointer;
+    }
+    .ranking-button:hover { border-color: var(--border-strong); background: var(--surface-hover); }
+    .ranking-number { display: grid; width: 25px; height: 25px; place-items: center; border-radius: 50%; background: var(--primary-soft); color: var(--primary-dark); font-size: 10px; font-weight: 950; }
+    .ranking-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 800; }
+    .ranking-value { color: var(--primary-dark); font-size: 11px; font-weight: 950; }
+
+    .map-tooltip {
+      position: fixed; z-index: 9999; width: min(250px, calc(100vw - 24px)); padding: 13px 14px;
+      border: 1px solid var(--border); border-radius: 15px; background: var(--surface-solid);
+      box-shadow: 0 18px 45px rgba(30, 20, 10, .22); color: var(--text); pointer-events: none;
+      transform: translate3d(0, 0, 0); backdrop-filter: blur(12px);
+    }
+    .map-tooltip[hidden] { display: none; }
+    .tooltip-region { margin: 0 0 8px; font-size: 14px; font-weight: 950; line-height: 1.45; }
+    .tooltip-grid { display: grid; grid-template-columns: auto 1fr; gap: 5px 10px; font-size: 11px; }
+    .tooltip-grid span { color: var(--muted); font-weight: 700; }
+    .tooltip-grid strong { text-align: right; font-weight: 900; }
+
     @media (max-width: 1040px) {
       .metric-grid, .curriculum-grid, .signal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .twins-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .comparison-layout { grid-template-columns: 1fr; }
+      .map-main { grid-template-columns: 1fr; }
+      .top10-panel { order: 2; }
     }
     @media (max-width: 760px) {
       body { padding: 14px 11px 34px; }
       .toolbar { justify-content: center; }
-      .theme-switcher { width: 100%; }
-      .theme-button { flex: 1; padding: 0 7px; }
+      .theme-switcher { width: 100%; border-radius: 22px; }
+      .theme-button { flex: 1 1 120px; padding: 0 9px; }
       .hero { padding: 27px 17px; border-radius: 25px; }
       .search-row { grid-template-columns: 1fr; }
       .add-button { width: 100%; }
-      .selection-head, .section-head { align-items: flex-start; flex-direction: column; gap: 6px; }
+      .selection-head, .section-head, .map-head { align-items: flex-start; flex-direction: column; gap: 6px; }
+      .map-view-buttons { justify-content: flex-start; }
+      .map-controls { align-items: stretch; }
+      .map-control, .map-select { width: 100%; min-width: 0; }
+      .top10-toggle { width: 100%; margin-left: 0; justify-content: center; }
+      .map-svg-wrap, .korea-map { min-height: 520px; }
       .period-badge { white-space: normal; }
       .charts-grid { grid-template-columns: 1fr; }
       .pyramid { height: 720px; }
@@ -364,6 +579,11 @@
       .section-card { padding: 17px 11px; border-radius: 22px; }
       .metric-card { min-height: 166px; }
       .pyramid { height: 770px; }
+      .map-card { padding: 16px 10px; border-radius: 22px; }
+      .map-stage { padding: 7px; }
+      .map-svg-wrap, .korea-map { min-height: 480px; }
+      .map-legend { right: 6px; bottom: 6px; grid-template-columns: auto 82px auto; }
+      .extreme-grid { grid-template-columns: 1fr; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
@@ -377,6 +597,8 @@
         <button class="theme-button" type="button" data-theme-value="cream" aria-pressed="true">🍞 크림</button>
         <button class="theme-button" type="button" data-theme-value="mint" aria-pressed="false">🌿 민트</button>
         <button class="theme-button" type="button" data-theme-value="berry" aria-pressed="false">🍓 베리</button>
+        <button class="theme-button" type="button" data-theme-value="cotton" aria-pressed="false">🌸 목화 보라</button>
+        <button class="theme-button" type="button" data-theme-value="crimson" aria-pressed="false">🟥 크림슨 레드</button>
       </div>
     </div>
 
@@ -388,6 +610,98 @@
           두 지역을 선택해 연령 구조를 나란히 비교하고, 인구 구성이 닮은 ‘쌍둥이 동네’를 찾아
           지역의 사회적 특징을 데이터로 탐구해 보세요.
         </p>
+
+        <section id="mapSection" class="map-card" aria-labelledby="mapTitle">
+          <header class="map-head">
+            <div>
+              <h2 id="mapTitle" class="map-title">🗺️ 전국에서 우리 동네는?</h2>
+              <p class="map-copy">
+                시군구별 연령 인구 비율을 지도에서 비교해 보세요. 색이 진할수록 현재 선택한 지표의 비율이 높습니다.
+                지도와 순위는 시군구 단위이며, 읍·면·동을 검색하면 해당 시군구가 반짝여 표시됩니다.
+              </p>
+            </div>
+
+            <div class="map-view-buttons" aria-label="지도 보기 범위">
+              <button class="map-view-button active" type="button" data-map-view="nation">전국 보기</button>
+              <button class="map-view-button" type="button" data-map-view="seoul">서울특별시 확대</button>
+            </div>
+          </header>
+
+          <div class="map-controls">
+            <label class="map-control" for="mapMetricSelect">
+              <span class="map-control-label">지도에 표시할 지표</span>
+              <select id="mapMetricSelect" class="map-select" disabled>
+                <option value="aging">고령화율 · 65세 이상</option>
+                <option value="youth">유소년 비율 · 0~14세</option>
+                <option value="teen">청소년 비율 · 13~18세</option>
+                <option value="age14">만 14세 비율</option>
+                <option value="infant">영유아 비율 · 0~6세</option>
+                <option value="age0">0세 비율 · 갓 태어난 아기</option>
+                <option value="age7">만 7세 비율 · 초등 입학 연령</option>
+                <option value="age13">만 13세 비율 · 중학교 입학 연령</option>
+                <option value="age16">만 16세 비율 · 고등학교 입학 연령</option>
+                <option value="custom">직접 정하기</option>
+              </select>
+            </label>
+
+            <div id="customAgeControls" class="custom-age-controls" hidden>
+              <label class="map-control compact" for="customStartAge">
+                <span class="map-control-label">시작 나이</span>
+                <input id="customStartAge" class="age-input" type="number" min="0" max="100" value="0" inputmode="numeric" />
+              </label>
+              <span class="age-separator">~</span>
+              <label class="map-control compact" for="customEndAge">
+                <span class="map-control-label">끝 나이</span>
+                <input id="customEndAge" class="age-input" type="number" min="0" max="100" value="14" inputmode="numeric" />
+              </label>
+            </div>
+
+            <label class="top10-toggle" for="top10Toggle">
+              <input id="top10Toggle" type="checkbox" checked />
+              상위 10 막대그래프 보기
+            </label>
+
+            <p id="mapIndicatorNote" class="map-indicator-note">
+              고령화율은 65세 이상 인구가 총인구에서 차지하는 비율입니다. 순위는 전국 시군구 기준입니다.
+            </p>
+          </div>
+
+          <div id="mapMain" class="map-main">
+            <div class="map-stage">
+              <div id="mapSvgWrap" class="map-svg-wrap">
+                <svg id="koreaMap" class="korea-map" role="img" aria-label="전국 시군구 인구 지표 지도"></svg>
+                <div id="mapLoading" class="map-loading">지도 경계와 시군구 인구를 불러오는 중입니다.</div>
+                <div class="map-legend" aria-label="지도 색상 범례">
+                  <span id="legendMin">최소</span>
+                  <span class="legend-gradient" aria-hidden="true"></span>
+                  <span id="legendMax">최대</span>
+                </div>
+              </div>
+              <p id="mapCaption" class="map-caption">
+                경계는 제공된 시군구 지도 JSON을, 지표값은 최신 주민등록 연령별 인구 CSV를 사용합니다.
+              </p>
+            </div>
+
+            <aside id="top10Panel" class="top10-panel">
+              <h3 id="top10Title" class="top10-title">고령화율 상위 10 지역</h3>
+              <p class="top10-copy">막대나 지역명을 누르면 해당 지역 대시보드로 이동합니다.</p>
+              <div id="top10Bars" class="top10-bars"></div>
+            </aside>
+          </div>
+
+          <div class="extreme-grid">
+            <section class="extreme-card">
+              <h3 class="extreme-title">상위 5 <span class="extreme-scope">전국 기준</span></h3>
+              <div id="top5List" class="ranking-list"></div>
+            </section>
+            <section class="extreme-card">
+              <h3 class="extreme-title">하위 5 <span class="extreme-scope">전국 기준</span></h3>
+              <div id="bottom5List" class="ranking-list"></div>
+            </section>
+          </div>
+
+          <div id="mapTooltip" class="map-tooltip" role="status" hidden></div>
+        </section>
 
         <div class="selection-zone">
           <div class="selection-head">
@@ -518,9 +832,9 @@
             <p>유소년·생산가능·고령 인구의 비율과 인구 피라미드 형태를 연결해 해석합니다.</p>
           </article>
           <article class="curriculum-card">
-            <span class="curriculum-tag">공간 비교</span>
-            <h4>지역 간 공통점과 차이 설명하기</h4>
-            <p>두 지역 또는 쌍둥이 동네를 비교해 지역성이 같거나 달라지는 이유를 가설로 세웁니다.</p>
+            <span class="curriculum-tag">지도·공간 분석</span>
+            <h4>분포와 지역 차이를 지도에서 설명하기</h4>
+            <p>전국 분포, 상·하위 지역, 쌍둥이 동네를 연결해 지역성이 같거나 달라지는 이유를 가설로 세웁니다.</p>
           </article>
           <article class="curriculum-card">
             <span class="curriculum-tag">사회 변화</span>
@@ -561,6 +875,7 @@
     "use strict";
 
     const CSV_URL = "https://raw.githubusercontent.com/greatsong/modudata/main/data/population_latest.csv";
+    const MAP_URL = "https://raw.githubusercontent.com/greatsong/modudata/main/data/sigungu_pop.json";
     const DEFAULT_REGION = "서울특별시 서초구 방배3동";
     const MAX_VISIBLE_OPTIONS = 400;
     const MAX_SELECTED = 2;
@@ -595,6 +910,39 @@
     const themeButtons = document.querySelectorAll(".theme-button");
     const scopeButtons = document.querySelectorAll(".scope-chip");
 
+    const mapMetricSelect = document.getElementById("mapMetricSelect");
+    const customAgeControls = document.getElementById("customAgeControls");
+    const customStartAge = document.getElementById("customStartAge");
+    const customEndAge = document.getElementById("customEndAge");
+    const top10Toggle = document.getElementById("top10Toggle");
+    const mapIndicatorNote = document.getElementById("mapIndicatorNote");
+    const mapMain = document.getElementById("mapMain");
+    const mapSvgWrap = document.getElementById("mapSvgWrap");
+    const koreaMap = document.getElementById("koreaMap");
+    const mapLoading = document.getElementById("mapLoading");
+    const mapCaption = document.getElementById("mapCaption");
+    const legendMin = document.getElementById("legendMin");
+    const legendMax = document.getElementById("legendMax");
+    const top10Panel = document.getElementById("top10Panel");
+    const top10Title = document.getElementById("top10Title");
+    const top10Bars = document.getElementById("top10Bars");
+    const top5List = document.getElementById("top5List");
+    const bottom5List = document.getElementById("bottom5List");
+    const mapTooltip = document.getElementById("mapTooltip");
+    const mapViewButtons = document.querySelectorAll(".map-view-button");
+
+    const MAP_METRICS = Object.freeze({
+      aging: { label: "고령화율", start: 65, end: 100, explanation: "65세 이상 인구가 총인구에서 차지하는 비율" },
+      youth: { label: "유소년 비율", start: 0, end: 14, explanation: "0~14세 인구가 총인구에서 차지하는 비율" },
+      teen: { label: "청소년 비율", start: 13, end: 18, explanation: "13~18세 인구가 총인구에서 차지하는 비율" },
+      age14: { label: "만 14세 비율", start: 14, end: 14, explanation: "만 14세 인구가 총인구에서 차지하는 비율" },
+      infant: { label: "영유아 비율", start: 0, end: 6, explanation: "0~6세 인구가 총인구에서 차지하는 비율" },
+      age0: { label: "0세 비율", start: 0, end: 0, explanation: "0세 인구 비율로 최근 출생 규모를 간접적으로 살펴보는 지표" },
+      age7: { label: "만 7세 비율", start: 7, end: 7, explanation: "초등학교 입학 연령대의 규모를 엿보는 지표" },
+      age13: { label: "만 13세 비율", start: 13, end: 13, explanation: "중학교 입학 연령대의 규모를 엿보는 지표" },
+      age16: { label: "만 16세 비율", start: 16, end: 16, explanation: "고등학교 입학 연령대의 규모를 엿보는 지표" }
+    });
+
     const regionMap = new Map();
     let regionNames = [];
     let dataPeriod = "";
@@ -603,6 +951,15 @@
     let highlightedIndex = -1;
     let dropdownIsOpen = false;
     let twinScope = "nation";
+
+    const mapRegions = new Map();
+    const mapPathsByName = new Map();
+    let mapMeta = {};
+    let mapView = "nation";
+    let mapMetricKey = "aging";
+    let mapRanking = [];
+    let mapRankingByName = new Map();
+    let mapTouchHideTimer = null;
 
     function parseCSV(text, onRow) {
       let row = [];
@@ -761,15 +1118,451 @@
       themeButtons.forEach(button => button.setAttribute("aria-pressed", String(button.dataset.themeValue === theme)));
       try { localStorage.setItem("population-compare-theme", theme); } catch (_) {}
       renderCharts();
+      updateMapSelectionHighlight();
     }
 
     function initializeTheme() {
       let theme = "cream";
       try {
         const saved = localStorage.getItem("population-compare-theme");
-        if (["cream", "mint", "berry"].includes(saved)) theme = saved;
+        if (saved === "cobalt") theme = "cotton";
+        else if (["cream", "mint", "berry", "cotton", "crimson"].includes(saved)) theme = saved;
       } catch (_) {}
       applyTheme(theme);
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function currentMapMetricDefinition() {
+      if (mapMetricKey !== "custom") return MAP_METRICS[mapMetricKey] || MAP_METRICS.aging;
+      const rawStart = Number.parseInt(customStartAge.value, 10);
+      const rawEnd = Number.parseInt(customEndAge.value, 10);
+      const startValue = clamp(Number.isFinite(rawStart) ? rawStart : 0, 0, 100);
+      const endValue = clamp(Number.isFinite(rawEnd) ? rawEnd : 14, 0, 100);
+      const start = Math.min(startValue, endValue);
+      const end = Math.max(startValue, endValue);
+      return {
+        label: start === end ? `만 ${start}세 비율` : `${start}~${end}세 비율`,
+        start,
+        end,
+        explanation: start === end
+          ? `만 ${start}세 인구가 총인구에서 차지하는 비율`
+          : `${start}~${end}세 인구가 총인구에서 차지하는 비율`
+      };
+    }
+
+    function mapMetricValue(population, definition = currentMapMetricDefinition()) {
+      const count = sumRange(population.ageMale, definition.start, definition.end)
+        + sumRange(population.ageFemale, definition.start, definition.end);
+      return { count, rate: percent(count, population.total) };
+    }
+
+    function extractCoordinateRings(node, rings = []) {
+      if (!Array.isArray(node) || !node.length) return rings;
+      const first = node[0];
+      if (
+        Array.isArray(first)
+        && first.length >= 2
+        && typeof first[0] === "number"
+        && typeof first[1] === "number"
+      ) {
+        if (node.length >= 3) rings.push(node);
+        return rings;
+      }
+      node.forEach(child => extractCoordinateRings(child, rings));
+      return rings;
+    }
+
+    async function loadMapData() {
+      mapLoading.hidden = false;
+      mapLoading.textContent = "지도 경계와 시군구 인구를 불러오는 중입니다.";
+
+      const response = await fetch(MAP_URL, { cache: "no-store" });
+      if (!response.ok) throw new Error(`지도 JSON 요청 실패: HTTP ${response.status}`);
+      const data = await response.json();
+      const entries = Array.isArray(data) ? data : data.sigungu;
+      if (!Array.isArray(entries)) throw new Error("시군구 지도 목록을 찾지 못했습니다.");
+
+      mapMeta = data && typeof data === "object" && !Array.isArray(data) ? (data.meta || {}) : {};
+      mapRegions.clear();
+
+      entries.forEach(entry => {
+        const name = cleanRegionName(entry?.n);
+        if (!name || !entry?.p) return;
+        if (!mapRegions.has(name)) {
+          mapRegions.set(name, { name, codes: new Set(), rings: [] });
+        }
+        const region = mapRegions.get(name);
+        if (entry.c) region.codes.add(String(entry.c));
+        region.rings.push(...extractCoordinateRings(entry.p));
+      });
+
+      mapMetricSelect.disabled = false;
+      mapLoading.hidden = true;
+      renderMapAnalytics();
+    }
+
+    function buildMapRanking() {
+      const definition = currentMapMetricDefinition();
+      const ranking = [];
+
+      mapRegions.forEach(region => {
+        const population = regionMap.get(normalizeRegionName(region.name));
+        if (!population || population.total <= 0) return;
+        const metric = mapMetricValue(population, definition);
+        ranking.push({
+          name: region.name,
+          population,
+          total: population.total,
+          count: metric.count,
+          value: metric.rate
+        });
+      });
+
+      ranking.sort((a, b) => b.value - a.value || b.total - a.total || a.name.localeCompare(b.name, "ko-KR"));
+      mapRanking = ranking;
+      mapRankingByName = new Map(ranking.map((item, index) => [item.name, { ...item, rank: index + 1 }]));
+      return ranking;
+    }
+
+    function visibleMapRegions() {
+      const regions = Array.from(mapRegions.values());
+      return mapView === "seoul"
+        ? regions.filter(region => region.name.startsWith("서울특별시 "))
+        : regions;
+    }
+
+    function mercatorPoint(point) {
+      const longitude = Number(point?.[0]);
+      const latitude = clamp(Number(point?.[1]), -85, 85);
+      if (!Number.isFinite(longitude) || !Number.isFinite(latitude)) return null;
+      const latitudeRadians = latitude * Math.PI / 180;
+      return [longitude, Math.log(Math.tan(Math.PI / 4 + latitudeRadians / 2))];
+    }
+
+    function mapColor(value, minValue, maxValue) {
+      const low = [255, 247, 223];
+      const high = [214, 92, 28];
+      const span = Math.max(maxValue - minValue, 0.000001);
+      const normalized = clamp((value - minValue) / span, 0, 1);
+      const eased = Math.pow(normalized, 0.78);
+      const rgb = low.map((channel, index) => Math.round(channel + (high[index] - channel) * eased));
+      return `rgb(${rgb.join(",")})`;
+    }
+
+    function createProjection(regions) {
+      const projectedPoints = [];
+      regions.forEach(region => {
+        region.rings.forEach(ring => {
+          ring.forEach(point => {
+            const projected = mercatorPoint(point);
+            if (projected) projectedPoints.push(projected);
+          });
+        });
+      });
+
+      const outputWidth = 720;
+      const outputHeight = mapView === "seoul" ? 610 : 850;
+      const padding = mapView === "seoul" ? 27 : 20;
+
+      if (!projectedPoints.length) {
+        return {
+          width: outputWidth,
+          height: outputHeight,
+          project: () => [0, 0]
+        };
+      }
+
+      const xs = projectedPoints.map(point => point[0]);
+      const ys = projectedPoints.map(point => point[1]);
+      const minX = Math.min(...xs);
+      const maxX = Math.max(...xs);
+      const minY = Math.min(...ys);
+      const maxY = Math.max(...ys);
+      const sourceWidth = Math.max(maxX - minX, 0.000001);
+      const sourceHeight = Math.max(maxY - minY, 0.000001);
+      const scale = Math.min(
+        (outputWidth - padding * 2) / sourceWidth,
+        (outputHeight - padding * 2) / sourceHeight
+      );
+      const renderedWidth = sourceWidth * scale;
+      const renderedHeight = sourceHeight * scale;
+      const offsetX = (outputWidth - renderedWidth) / 2;
+      const offsetY = (outputHeight - renderedHeight) / 2;
+
+      return {
+        width: outputWidth,
+        height: outputHeight,
+        project(point) {
+          const projected = mercatorPoint(point);
+          if (!projected) return [0, 0];
+          return [
+            offsetX + (projected[0] - minX) * scale,
+            outputHeight - offsetY - (projected[1] - minY) * scale
+          ];
+        }
+      };
+    }
+
+    function regionPathData(region, project) {
+      return region.rings.map(ring => {
+        const points = ring.map(project).filter(point => Number.isFinite(point[0]) && Number.isFinite(point[1]));
+        if (points.length < 3) return "";
+        return `M${points.map(point => `${point[0].toFixed(2)},${point[1].toFixed(2)}`).join("L")}Z`;
+      }).filter(Boolean).join("");
+    }
+
+    function setHoveredMapRegion(name, hovered) {
+      const path = mapPathsByName.get(name);
+      if (path) path.classList.toggle("hovered", hovered);
+    }
+
+    function positionMapTooltip(clientX, clientY) {
+      if (mapTooltip.hidden) return;
+      const margin = 12;
+      const gap = 14;
+      const rect = mapTooltip.getBoundingClientRect();
+      let left = clientX + gap;
+      let top = clientY + gap;
+      if (left + rect.width + margin > window.innerWidth) left = clientX - rect.width - gap;
+      if (top + rect.height + margin > window.innerHeight) top = clientY - rect.height - gap;
+      left = clamp(left, margin, Math.max(margin, window.innerWidth - rect.width - margin));
+      top = clamp(top, margin, Math.max(margin, window.innerHeight - rect.height - margin));
+      mapTooltip.style.left = `${left}px`;
+      mapTooltip.style.top = `${top}px`;
+    }
+
+    function showMapTooltip(name, clientX, clientY, pointerType = "mouse") {
+      const item = mapRankingByName.get(name);
+      if (!item) return;
+      const definition = currentMapMetricDefinition();
+      mapTooltip.innerHTML = `
+        <h4 class="tooltip-region">${escapeHtml(name)}</h4>
+        <div class="tooltip-grid">
+          <span>총인구</span><strong>${numberFormatter.format(item.total)}명</strong>
+          <span>${escapeHtml(definition.label)}</span><strong>${rateFormatter.format(item.value)}%</strong>
+          <span>전국 순위</span><strong>전국 ${numberFormatter.format(mapRanking.length)}개 중 ${numberFormatter.format(item.rank)}위</strong>
+        </div>`;
+      mapTooltip.hidden = false;
+      positionMapTooltip(clientX, clientY);
+
+      if (pointerType === "touch") {
+        window.clearTimeout(mapTouchHideTimer);
+        mapTouchHideTimer = window.setTimeout(hideMapTooltip, 2600);
+      }
+    }
+
+    function hideMapTooltip() {
+      mapTooltip.hidden = true;
+      window.clearTimeout(mapTouchHideTimer);
+    }
+
+    function renderMap() {
+      if (!mapRegions.size) return;
+      const regions = visibleMapRegions();
+      const projection = createProjection(regions);
+      koreaMap.setAttribute("viewBox", `0 0 ${projection.width} ${projection.height}`);
+      koreaMap.setAttribute("aria-label", mapView === "seoul" ? "서울특별시 자치구 인구 지표 지도" : "전국 시군구 인구 지표 지도");
+      koreaMap.style.aspectRatio = `${projection.width} / ${projection.height}`;
+      koreaMap.replaceChildren();
+      mapPathsByName.clear();
+
+      const values = mapRanking.map(item => item.value);
+      const minValue = values.length ? Math.min(...values) : 0;
+      const maxValue = values.length ? Math.max(...values) : 0;
+      const svgNamespace = "http://www.w3.org/2000/svg";
+      const fragment = document.createDocumentFragment();
+
+      regions.forEach(region => {
+        const d = regionPathData(region, projection.project);
+        if (!d) return;
+        const path = document.createElementNS(svgNamespace, "path");
+        const rankingItem = mapRankingByName.get(region.name);
+        path.setAttribute("d", d);
+        path.setAttribute("fill-rule", "evenodd");
+        path.setAttribute("role", "button");
+        path.setAttribute("tabindex", "0");
+        path.setAttribute("aria-label", rankingItem
+          ? `${region.name}, ${currentMapMetricDefinition().label} ${rateFormatter.format(rankingItem.value)}퍼센트`
+          : `${region.name}, 인구 데이터 없음`);
+        path.classList.add("map-shape");
+        if (rankingItem) path.setAttribute("fill", mapColor(rankingItem.value, minValue, maxValue));
+        else path.classList.add("no-data");
+
+        path.addEventListener("pointerenter", event => {
+          setHoveredMapRegion(region.name, true);
+          showMapTooltip(region.name, event.clientX, event.clientY, event.pointerType);
+        });
+        path.addEventListener("pointermove", event => {
+          if (event.pointerType !== "touch") positionMapTooltip(event.clientX, event.clientY);
+        });
+        path.addEventListener("pointerleave", event => {
+          setHoveredMapRegion(region.name, false);
+          if (event.pointerType !== "touch") hideMapTooltip();
+        });
+        path.addEventListener("pointerdown", event => {
+          if (event.pointerType === "touch") showMapTooltip(region.name, event.clientX, event.clientY, "touch");
+        });
+        path.addEventListener("click", event => {
+          showMapTooltip(region.name, event.clientX || window.innerWidth / 2, event.clientY || window.innerHeight / 2, event.pointerType);
+          focusRegionFromMap(region.name);
+        });
+        path.addEventListener("keydown", event => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            focusRegionFromMap(region.name);
+          }
+        });
+
+        mapPathsByName.set(region.name, path);
+        fragment.appendChild(path);
+      });
+
+      koreaMap.appendChild(fragment);
+      updateMapSelectionHighlight();
+    }
+
+    function createRankingButton(item, displayRank) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "ranking-button";
+      button.title = item.name;
+      button.innerHTML = `
+        <span class="ranking-number">${numberFormatter.format(displayRank)}</span>
+        <span class="ranking-name">${escapeHtml(item.name)}</span>
+        <span class="ranking-value">${rateFormatter.format(item.value)}%</span>`;
+      button.addEventListener("click", () => focusRegionFromMap(item.name));
+      return button;
+    }
+
+    function renderExtremeRankings() {
+      top5List.replaceChildren();
+      bottom5List.replaceChildren();
+      mapRanking.slice(0, 5).forEach(item => {
+        const ranked = mapRankingByName.get(item.name);
+        top5List.appendChild(createRankingButton(item, ranked.rank));
+      });
+      mapRanking.slice(-5).reverse().forEach(item => {
+        const ranked = mapRankingByName.get(item.name);
+        bottom5List.appendChild(createRankingButton(item, ranked.rank));
+      });
+    }
+
+    function renderTop10Chart() {
+      const definition = currentMapMetricDefinition();
+      const visible = top10Toggle.checked;
+      top10Panel.hidden = !visible;
+      mapMain.classList.toggle("top10-hidden", !visible);
+      if (!visible) return;
+
+      top10Title.textContent = `${definition.label} 상위 10 지역`;
+      top10Bars.replaceChildren();
+      const items = mapRanking.slice(0, 10);
+      const maxValue = Math.max(...items.map(item => item.value), 0.000001);
+
+      items.forEach(item => {
+        const ranked = mapRankingByName.get(item.name);
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "bar-rank-button";
+        button.title = `${item.name} · 전국 ${ranked.rank}위`;
+        const width = clamp((item.value / maxValue) * 100, 2, 100);
+        button.innerHTML = `
+          <span class="bar-rank-head">
+            <span class="bar-rank-name">${ranked.rank}. ${escapeHtml(item.name)}</span>
+            <span class="bar-rank-value">${rateFormatter.format(item.value)}%</span>
+          </span>
+          <span class="bar-track"><span class="bar-fill" style="width:${width}%"></span></span>`;
+        button.addEventListener("click", () => focusRegionFromMap(item.name));
+        top10Bars.appendChild(button);
+      });
+    }
+
+    function renderMapAnalytics() {
+      if (!mapRegions.size || !regionMap.size) return;
+      mapMetricKey = mapMetricSelect.value || "aging";
+      customAgeControls.hidden = mapMetricKey !== "custom";
+      const definition = currentMapMetricDefinition();
+      buildMapRanking();
+
+      const values = mapRanking.map(item => item.value);
+      const minValue = values.length ? Math.min(...values) : 0;
+      const maxValue = values.length ? Math.max(...values) : 0;
+      legendMin.textContent = `${rateFormatter.format(minValue)}%`;
+      legendMax.textContent = `${rateFormatter.format(maxValue)}%`;
+      mapIndicatorNote.textContent = `${definition.explanation}입니다. 순위는 전국 ${numberFormatter.format(mapRanking.length)}개 시군구 기준입니다.`
+        + (["age7", "age13", "age16"].includes(mapMetricKey)
+          ? " 실제 입학생 수는 전입·전출, 조기·유예 입학, 학교 선택에 따라 달라질 수 있습니다."
+          : mapMetricKey === "age0"
+            ? " 출생률 자체가 아니라 현재 거주하는 0세 인구의 비율입니다."
+            : "");
+
+      renderMap();
+      renderTop10Chart();
+      renderExtremeRankings();
+      if (!dashboard.hidden) renderInquiry(selectedPopulations());
+    }
+
+    function setMapView(view) {
+      mapView = view === "seoul" ? "seoul" : "nation";
+      mapViewButtons.forEach(button => button.classList.toggle("active", button.dataset.mapView === mapView));
+      renderMap();
+    }
+
+    function mapRegionNamesForSelection(selectedName) {
+      const name = cleanRegionName(selectedName);
+      if (!name || !mapRegions.size) return [];
+      if (mapRegions.has(name)) return [name];
+
+      const prefixMatches = Array.from(mapRegions.keys())
+        .filter(mapName => name.startsWith(`${mapName} `))
+        .sort((a, b) => b.length - a.length);
+      if (prefixMatches.length) return [prefixMatches[0]];
+
+      if (regionLevel(name) === "province") {
+        return Array.from(mapRegions.keys()).filter(mapName => mapName.startsWith(`${name} `));
+      }
+      return [];
+    }
+
+    function updateMapSelectionHighlight() {
+      mapPathsByName.forEach(path => path.classList.remove("selected-primary", "selected-secondary"));
+      selectedNames.forEach((selectedName, index) => {
+        mapRegionNamesForSelection(selectedName).forEach(mapName => {
+          const path = mapPathsByName.get(mapName);
+          if (path) path.classList.add(index === 0 ? "selected-primary" : "selected-secondary");
+        });
+      });
+    }
+
+    function ensureSelectedRegionVisibleOnMap(name) {
+      if (mapView !== "seoul") return;
+      const mapNames = mapRegionNamesForSelection(name);
+      if (mapNames.some(mapName => !mapName.startsWith("서울특별시 "))) setMapView("nation");
+    }
+
+    function focusRegionFromMap(name) {
+      const population = regionMap.get(normalizeRegionName(name));
+      if (!population) return;
+      if (mapView === "seoul" && !name.startsWith("서울특별시 ")) setMapView("nation");
+      selectedNames = [population.name];
+      regionInput.value = "";
+      closeDropdown();
+      renderAll();
+      setStatus(`${population.name}의 인구 정보를 지도에서 선택했습니다.`);
+      window.requestAnimationFrame(() => {
+        dashboard.scrollIntoView({
+          behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+          block: "start"
+        });
+      });
+    }
+
+    function handleCustomAgeChange() {
+      if (mapMetricKey !== "custom") return;
+      renderMapAnalytics();
     }
 
     function filterRegions(query) {
@@ -876,6 +1669,7 @@
 
       regionInput.value = "";
       closeDropdown();
+      ensureSelectedRegionVisibleOnMap(canonical);
       renderAll();
       setStatus(selectedNames.length === 2 ? "두 지역을 나란히 비교하고 있습니다." : `${canonical}의 인구 정보를 표시했습니다.`);
     }
@@ -1193,6 +1987,12 @@
       const questions = [];
       const a = populations[0];
       if (!a) return;
+      const mapDefinition = currentMapMetricDefinition();
+      const mappedRegion = mapRegionNamesForSelection(a.name)[0];
+      const mappedItem = mappedRegion ? mapRankingByName.get(mappedRegion) : null;
+      if (mappedItem) {
+        questions.push(`${mappedRegion}의 ${mapDefinition.label}은 전국 ${mapRanking.length}개 시군구 중 ${mappedItem.rank}위이다. 지도에서 비슷하게 나타나는 지역들은 어떤 공간적 공통점을 가질까?`);
+      }
       if (populations.length === 1) {
         questions.push(`${a.name}의 고령화율 ${rateFormatter.format(a.metrics.elderlyRate)}%와 유소년 비율 ${rateFormatter.format(a.metrics.youthRate)}%는 학교·돌봄·의료 서비스 수요에 어떤 차이를 만들까?`);
         questions.push(`${a.name}과 인구구조가 비슷한 쌍둥이 동네는 공간적 위치, 주거 형태, 교통 조건도 비슷할까? 어떤 자료를 더 모아야 할까?`);
@@ -1261,6 +2061,7 @@
       renderTwins(populations);
       renderInquiry(populations);
       renderSignals(populations);
+      updateMapSelectionHighlight();
     }
 
     async function loadPopulationData() {
@@ -1317,6 +2118,16 @@
         else if (regionNames.length) selectedNames = [regionNames[0]];
 
         renderAll();
+        try {
+          await loadMapData();
+          const boundaryDate = mapMeta.updated ? ` · 지도 데이터 ${mapMeta.updated}` : "";
+          mapCaption.textContent = `경계는 제공된 시군구 지도 JSON을, 지표값은 ${dataPeriod || "최신"} 주민등록 연령별 인구 CSV를 사용합니다${boundaryDate}.`;
+        } catch (mapError) {
+          console.error(mapError);
+          mapLoading.hidden = false;
+          mapLoading.textContent = "지도를 불러오지 못했습니다. 지역 검색과 비교 대시보드는 계속 사용할 수 있습니다.";
+          mapIndicatorNote.textContent = "지도 JSON을 불러오지 못했습니다. 인터넷 연결과 지도 데이터 주소를 확인해 주세요.";
+        }
         setStatus(`${numberFormatter.format(regionNames.length)}개 행정구역을 불러왔습니다.`);
       } catch (error) {
         console.error(error);
@@ -1334,6 +2145,18 @@
       scopeButtons.forEach(item => item.classList.toggle("active", item === button));
       renderTwins(selectedPopulations());
     }));
+
+    mapMetricSelect.addEventListener("change", () => {
+      mapMetricKey = mapMetricSelect.value;
+      customAgeControls.hidden = mapMetricKey !== "custom";
+      renderMapAnalytics();
+    });
+    customStartAge.addEventListener("input", handleCustomAgeChange);
+    customEndAge.addEventListener("input", handleCustomAgeChange);
+    customStartAge.addEventListener("change", handleCustomAgeChange);
+    customEndAge.addEventListener("change", handleCustomAgeChange);
+    top10Toggle.addEventListener("change", renderTop10Chart);
+    mapViewButtons.forEach(button => button.addEventListener("click", () => setMapView(button.dataset.mapView)));
 
     regionInput.addEventListener("focus", () => openDropdown(!regionInput.value));
     regionInput.addEventListener("click", () => openDropdown(!regionInput.value));
