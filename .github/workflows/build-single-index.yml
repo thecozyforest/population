@@ -7,6 +7,7 @@ on:
       - "base.html"
       - "guide-enhancements.js"
       - "trend-enhancements.js"
+      - "fieldwork-enhancements.js"
       - "scripts/build_index.py"
       - ".github/workflows/build-single-index.yml"
   workflow_dispatch:
