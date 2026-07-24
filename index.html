@@ -607,9 +607,49 @@
         <div class="eyebrow"><span class="eyebrow-dot"></span>주민등록 인구 구조 탐구</div>
         <h1>지역 인구 비교 대시보드</h1>
         <p class="hero-copy">
-          두 지역을 선택해 연령 구조를 나란히 비교하고, 인구 구성이 닮은 ‘쌍둥이 동네’를 찾아
-          지역의 사회적 특징을 데이터로 탐구해 보세요.
+          먼저 지역을 검색해 비교 대상을 고른 뒤, 전국 지도에서 위치와 순위를 확인하고
+          인구 구성이 닮은 ‘쌍둥이 동네’와 연령 구조를 함께 탐구해 보세요.
         </p>
+
+        <div class="selection-zone">
+          <div class="selection-head">
+            <span class="selection-title">비교할 지역 · 최대 2곳</span>
+            <span class="selection-help">지역을 추가하면 비교 화면이 자동으로 바뀝니다.</span>
+          </div>
+
+          <div id="selectedChips" class="selected-chips" aria-live="polite"></div>
+
+          <form id="searchForm" class="search-row">
+            <div id="comboBox" class="combo" role="combobox" aria-haspopup="listbox" aria-expanded="false">
+              <div class="input-wrap">
+                <span class="search-icon" aria-hidden="true">⌕</span>
+                <label for="regionInput" hidden>행정구역 검색</label>
+                <input
+                  id="regionInput"
+                  class="search-input"
+                  type="text"
+                  placeholder="예: 방배, 서초구 방배3동"
+                  autocomplete="off"
+                  aria-autocomplete="list"
+                  aria-controls="regionDropdownList"
+                  disabled
+                />
+                <button id="dropdownButton" class="dropdown-toggle" type="button" aria-label="지역 목록 열기" aria-expanded="false" disabled>
+                  <span class="dropdown-arrow">▼</span>
+                </button>
+              </div>
+
+              <div id="dropdownPanel" class="dropdown-panel" hidden>
+                <div id="dropdownInfo" class="dropdown-info"></div>
+                <div id="regionDropdownList" class="dropdown-list" role="listbox"></div>
+              </div>
+            </div>
+
+            <button id="addButton" class="add-button" type="submit" disabled>지역 추가</button>
+          </form>
+
+          <p id="status" class="status" role="status">인구 데이터를 불러오는 중입니다.</p>
+        </div>
 
         <section id="mapSection" class="map-card" aria-labelledby="mapTitle">
           <header class="map-head">
@@ -702,46 +742,6 @@
 
           <div id="mapTooltip" class="map-tooltip" role="status" hidden></div>
         </section>
-
-        <div class="selection-zone">
-          <div class="selection-head">
-            <span class="selection-title">비교할 지역 · 최대 2곳</span>
-            <span class="selection-help">지역을 추가하면 비교 화면이 자동으로 바뀝니다.</span>
-          </div>
-
-          <div id="selectedChips" class="selected-chips" aria-live="polite"></div>
-
-          <form id="searchForm" class="search-row">
-            <div id="comboBox" class="combo" role="combobox" aria-haspopup="listbox" aria-expanded="false">
-              <div class="input-wrap">
-                <span class="search-icon" aria-hidden="true">⌕</span>
-                <label for="regionInput" hidden>행정구역 검색</label>
-                <input
-                  id="regionInput"
-                  class="search-input"
-                  type="text"
-                  placeholder="예: 방배, 서초구 방배3동"
-                  autocomplete="off"
-                  aria-autocomplete="list"
-                  aria-controls="regionDropdownList"
-                  disabled
-                />
-                <button id="dropdownButton" class="dropdown-toggle" type="button" aria-label="지역 목록 열기" aria-expanded="false" disabled>
-                  <span class="dropdown-arrow">▼</span>
-                </button>
-              </div>
-
-              <div id="dropdownPanel" class="dropdown-panel" hidden>
-                <div id="dropdownInfo" class="dropdown-info"></div>
-                <div id="regionDropdownList" class="dropdown-list" role="listbox"></div>
-              </div>
-            </div>
-
-            <button id="addButton" class="add-button" type="submit" disabled>지역 추가</button>
-          </form>
-
-          <p id="status" class="status" role="status">인구 데이터를 불러오는 중입니다.</p>
-        </div>
       </div>
     </section>
 
