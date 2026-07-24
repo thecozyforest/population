@@ -8,6 +8,8 @@ on:
       - "base.html"
       - "guide-enhancements.js"
       - "trend-enhancements.js"
+      - "fieldwork-enhancements.js"
+      - "scripts/build_index.py"
       - ".github/workflows/validate-dashboard.yml"
   workflow_dispatch:
 
@@ -20,12 +22,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check JavaScript syntax
+      - name: Check enhancement JavaScript syntax
         run: |
           node --check guide-enhancements.js
           node --check trend-enhancements.js
+          node --check fieldwork-enhancements.js
 
-      - name: Check loader and required files
+      - name: Check required files and single-file integration
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -36,24 +39,41 @@ jobs:
               Path("base.html"),
               Path("guide-enhancements.js"),
               Path("trend-enhancements.js"),
+              Path("fieldwork-enhancements.js"),
+              Path("scripts/build_index.py"),
           ]
           for path in required:
               if not path.exists() or path.stat().st_size == 0:
                   raise SystemExit(f"Missing or empty file: {path}")
 
           index = Path("index.html").read_text(encoding="utf-8")
-          for token in ("base.html", "guide-enhancements.js", "trend-enhancements.js", "pako.min.js"):
+          required_tokens = (
+              'id="dashboard"',
+              'function activateTab',
+              'window.__decodePopulation',
+              'pako.min.js',
+              '📈 변화 추이',
+              'ℹ️ 사용설명서',
+              'population-fieldwork-check-v2',
+              '체크 결과 복사',
+          )
+          for token in required_tokens:
               if token not in index:
-                  raise SystemExit(f"Loader reference missing: {token}")
+                  raise SystemExit(f"Single-file integration token missing: {token}")
 
-          base = Path("base.html").read_text(encoding="utf-8")
-          for token in ('id="dashboard"', 'function activateTab', 'function focusPop', 'function parseCSV'):
-              if token not in base:
-                  raise SystemExit(f"Base integration point missing: {token}")
+          for external_source in ("base.html", "guide-enhancements.js", "trend-enhancements.js", "fieldwork-enhancements.js"):
+              if f'src="./{external_source}' in index:
+                  raise SystemExit(f"index.html still depends on local runtime source: {external_source}")
 
-          scripts = re.findall(r"<script>(.*?)</script>", index, flags=re.S)
-          if not scripts:
-              raise SystemExit("Inline loader script not found")
-          Path("/tmp/loader.js").write_text(scripts[-1], encoding="utf-8")
+          scripts = re.findall(r"<script(?:\s[^>]*)?>(.*?)</script>", index, flags=re.S)
+          nonempty = [script for script in scripts if script.strip()]
+          if len(nonempty) < 4:
+              raise SystemExit("Expected embedded base, trend, fieldwork, and guide scripts")
+          for number, script in enumerate(nonempty, start=1):
+              Path(f"/tmp/index-script-{number}.js").write_text(script, encoding="utf-8")
+          print(len(nonempty))
           PY
-          node --check /tmp/loader.js
+
+          for file in /tmp/index-script-*.js; do
+            node --check "$file"
+          done
