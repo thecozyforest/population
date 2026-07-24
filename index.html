@@ -467,6 +467,52 @@
     .top10-toggle input { width: 17px; height: 17px; accent-color: var(--primary); }
     .map-indicator-note { width: 100%; margin: 0; color: var(--muted); font-size: 11px; font-weight: 650; line-height: 1.6; }
 
+
+
+    .discovery-lab {
+      margin-bottom: 15px; padding: 16px; border: 1px solid var(--border); border-radius: 20px;
+      background: linear-gradient(145deg, var(--surface-solid), var(--surface-soft)); box-shadow: var(--shadow-soft);
+    }
+    .discovery-head {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; margin-bottom: 12px;
+    }
+    .discovery-title { margin: 0; font-size: 17px; letter-spacing: -.03em; }
+    .discovery-copy { margin: 5px 0 0; color: var(--muted); font-size: 11px; font-weight: 650; line-height: 1.6; }
+    .discovery-live-badge {
+      flex: 0 0 auto; padding: 6px 9px; border: 1px solid var(--border); border-radius: 999px;
+      background: var(--surface-soft); color: var(--primary-dark); font-size: 10px; font-weight: 900;
+    }
+    .discovery-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .discovery-card {
+      display: flex; min-width: 0; flex-direction: column; padding: 15px; border: 1px solid var(--border);
+      border-radius: 17px; background: var(--surface-solid); transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+    }
+    .discovery-card:hover { transform: translateY(-2px); border-color: var(--border-strong); box-shadow: var(--shadow-soft); }
+    .discovery-kicker { color: var(--primary-dark); font-size: 11px; font-weight: 950; }
+    .discovery-card h4 { margin: 7px 0 7px; font-size: 15px; line-height: 1.4; letter-spacing: -.025em; }
+    .discovery-card p { margin: 0; color: var(--muted); font-size: 11px; font-weight: 650; line-height: 1.65; }
+    .discovery-hint {
+      margin-top: 9px; padding: 9px 10px; border-radius: 12px; background: var(--surface-soft);
+      color: var(--muted); font-size: 10px; font-weight: 750; line-height: 1.6;
+    }
+    .discovery-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: auto; padding-top: 12px; }
+    .discovery-metric-button, .discovery-reveal-button {
+      min-height: 35px; padding: 0 10px; border: 1px solid var(--border-strong); border-radius: 10px;
+      background: var(--surface-soft); color: var(--text); font-size: 10px; font-weight: 900; cursor: pointer;
+    }
+    .discovery-metric-button:hover:not(:disabled), .discovery-reveal-button:hover:not(:disabled) {
+      border-color: var(--primary); background: var(--surface-hover); color: var(--primary-dark);
+    }
+    .discovery-metric-button.active { border-color: var(--primary); background: var(--primary); color: #fff; }
+    .discovery-metric-button:disabled, .discovery-reveal-button:disabled { cursor: wait; opacity: .55; }
+    .discovery-evidence {
+      margin-top: 10px; padding: 11px; border-left: 4px solid var(--primary); border-radius: 11px;
+      background: var(--primary-soft); color: var(--text); font-size: 10px; font-weight: 750; line-height: 1.7;
+    }
+    .discovery-evidence[hidden] { display: none; }
+    .discovery-evidence strong { color: var(--primary-dark); }
+    .discovery-evidence-note { display: block; margin-top: 6px; color: var(--muted); font-weight: 650; }
+
     .map-main { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(270px, .55fr); gap: 15px; align-items: stretch; }
     .map-main.top10-hidden { grid-template-columns: 1fr; }
     .map-stage {
@@ -563,6 +609,7 @@
     .tooltip-grid strong { text-align: right; font-weight: 900; }
 
     @media (max-width: 1040px) {
+      .discovery-grid { grid-template-columns: 1fr; }
       .metric-grid, .curriculum-grid, .signal-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .twins-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .comparison-layout { grid-template-columns: 1fr; }
@@ -596,6 +643,9 @@
       .metric-card { min-height: 166px; }
       .pyramid { height: 770px; }
       .map-card { padding: 16px 10px; border-radius: 22px; }
+      .discovery-lab { padding: 13px; }
+      .discovery-head { flex-direction: column; }
+      .discovery-live-badge { align-self: flex-start; }
       .map-stage { padding: 7px; }
       .map-svg-wrap, .korea-map { min-height: 480px; }
       .map-legend { right: 6px; bottom: 6px; grid-template-columns: auto 82px auto; }
@@ -728,6 +778,68 @@
               고령화율은 65세 이상 인구가 총인구에서 차지하는 비율입니다. 순위는 전국 시군구 기준입니다.
             </p>
           </div>
+
+
+          <section class="discovery-lab" aria-labelledby="discoveryTitle">
+            <header class="discovery-head">
+              <div>
+                <h3 id="discoveryTitle" class="discovery-title">🔎 지도를 읽는 발견 미션</h3>
+                <p class="discovery-copy">
+                  버튼을 누르면 알맞은 지표·전국 보기·상위 10 그래프가 한 번에 열립니다.
+                  먼저 지도에서 패턴을 추측한 뒤 ‘데이터로 확인’을 펼쳐 보세요.
+                </p>
+              </div>
+              <span class="discovery-live-badge">최신 CSV로 자동 계산</span>
+            </header>
+
+            <div class="discovery-grid">
+              <article class="discovery-card">
+                <span class="discovery-kicker">🤔 발견 1</span>
+                <h4 id="agingDiscoveryTitle">65세 이상 인구가 유난히 많은 동네는?</h4>
+                <p>
+                  고령화율 지도에서 가장 진한 지역을 찾고, 상위 지역이 어느 권역에 몰려 있는지 살펴보세요.
+                  하위 5 지역과 비교하면 도시화·청년 이동의 흔적을 추측할 수 있습니다.
+                </p>
+                <div class="discovery-hint">관찰 단서 · 상위 5와 하위 5, 군 지역과 신도시·대도시 구의 차이</div>
+                <div class="discovery-actions">
+                  <button class="discovery-metric-button" type="button" data-discovery-metric="aging" disabled>고령화율 지도 보기</button>
+                  <button class="discovery-reveal-button" type="button" data-evidence-target="agingDiscoveryEvidence" aria-expanded="false" disabled>✔ 데이터로 확인</button>
+                </div>
+                <div id="agingDiscoveryEvidence" class="discovery-evidence" hidden></div>
+              </article>
+
+              <article class="discovery-card">
+                <span class="discovery-kicker">🤔 발견 2</span>
+                <h4>갓 태어난 아기는 어디에 많이 살까?</h4>
+                <p>
+                  0세 비율로 바꾸고 상위 지역의 공통점을 찾아보세요. 신도시, 신규 입주, 재개발,
+                  가구 형성층의 이동, 직장 접근성 가운데 무엇이 설명력이 있는지 가설을 세울 수 있습니다.
+                </p>
+                <div class="discovery-hint">추가 확인 자료 · 최근 입주 물량, 전입·전출, 출생아 수, 가구 수, 주택 유형</div>
+                <div class="discovery-actions">
+                  <button class="discovery-metric-button" type="button" data-discovery-metric="age0" disabled>0세 비율 지도 보기</button>
+                  <button class="discovery-reveal-button" type="button" data-evidence-target="babyDiscoveryEvidence" aria-expanded="false" disabled>✔ 데이터로 확인</button>
+                </div>
+                <div id="babyDiscoveryEvidence" class="discovery-evidence" hidden></div>
+              </article>
+
+              <article class="discovery-card">
+                <span class="discovery-kicker">🤔 발견 3</span>
+                <h4>고령화율과 유소년 지도는 서로 뒤집힐까?</h4>
+                <p>
+                  두 지표를 번갈아 보며 진한 지역과 옅은 지역이 얼마나 바뀌는지 확인하세요.
+                  어른의 이동과 일자리·주거 선택이 아이들의 분포와 어떤 관련이 있는지 설명해 보세요.
+                </p>
+                <div class="discovery-hint">관찰 단서 · 같은 지역의 고령화율과 유소년 비율, 두 지표의 전국 상관관계</div>
+                <div class="discovery-actions">
+                  <button class="discovery-metric-button" type="button" data-discovery-metric="aging" disabled>고령화율</button>
+                  <button class="discovery-metric-button" type="button" data-discovery-metric="youth" disabled>유소년 비율</button>
+                  <button class="discovery-reveal-button" type="button" data-evidence-target="mirrorDiscoveryEvidence" aria-expanded="false" disabled>✔ 데이터로 확인</button>
+                </div>
+                <div id="mirrorDiscoveryEvidence" class="discovery-evidence" hidden></div>
+              </article>
+            </div>
+          </section>
 
           <div id="mapMain" class="map-main">
             <div class="map-stage">
@@ -956,6 +1068,13 @@
     const nationViewButton = document.getElementById("nationViewButton");
     const selectedProvinceButton = document.getElementById("selectedProvinceButton");
     const provinceViewSelect = document.getElementById("provinceViewSelect");
+    const mapSection = document.getElementById("mapSection");
+    const discoveryMetricButtons = document.querySelectorAll(".discovery-metric-button");
+    const discoveryRevealButtons = document.querySelectorAll(".discovery-reveal-button");
+    const agingDiscoveryTitle = document.getElementById("agingDiscoveryTitle");
+    const agingDiscoveryEvidence = document.getElementById("agingDiscoveryEvidence");
+    const babyDiscoveryEvidence = document.getElementById("babyDiscoveryEvidence");
+    const mirrorDiscoveryEvidence = document.getElementById("mirrorDiscoveryEvidence");
 
     const PROVINCE_ORDER = Object.freeze([
       "서울특별시", "부산광역시", "대구광역시", "인천광역시", "광주광역시", "대전광역시", "울산광역시",
@@ -1235,6 +1354,8 @@
       populateProvinceViewSelect();
       mapMetricSelect.disabled = false;
       provinceViewSelect.disabled = false;
+      discoveryMetricButtons.forEach(button => { button.disabled = false; });
+      discoveryRevealButtons.forEach(button => { button.disabled = false; });
       mapLoading.hidden = true;
       updateMapViewControls();
       renderMapAnalytics();
@@ -1261,6 +1382,133 @@
       mapRanking = ranking;
       mapRankingByName = new Map(ranking.map((item, index) => [item.name, { ...item, rank: index + 1 }]));
       return ranking;
+    }
+
+
+
+    function rankingForMetric(metricKey) {
+      const definition = MAP_METRICS[metricKey];
+      if (!definition) return [];
+      const ranking = [];
+
+      mapRegions.forEach(region => {
+        const population = regionMap.get(normalizeRegionName(region.name));
+        if (!population || population.total <= 0) return;
+        const metric = mapMetricValue(population, definition);
+        ranking.push({
+          name: region.name,
+          total: population.total,
+          population,
+          count: metric.count,
+          value: metric.rate
+        });
+      });
+
+      return ranking.sort((a, b) => b.value - a.value || b.total - a.total || a.name.localeCompare(b.name, "ko-KR"));
+    }
+
+    function summarizeRegions(items, limit = items.length) {
+      return items.slice(0, limit).map((item, index) =>
+        `${index + 1}위 ${escapeHtml(item.name)} <strong>${rateFormatter.format(item.value)}%</strong>`
+      ).join(" · ");
+    }
+
+    function strongestProvinceCluster(items, limit = 10) {
+      const counts = new Map();
+      items.slice(0, limit).forEach(item => {
+        const province = provinceName(item.name);
+        counts.set(province, (counts.get(province) || 0) + 1);
+      });
+      const sorted = Array.from(counts.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ko-KR"));
+      if (!sorted.length) return "";
+      const [province, count] = sorted[0];
+      return count >= 2 ? `상위 ${limit}곳 가운데 ${escapeHtml(province)}가 ${count}곳으로 가장 많습니다.` : "상위 지역이 여러 시·도에 분산되어 있습니다.";
+    }
+
+    function pearsonCorrelation(pairs) {
+      if (pairs.length < 2) return NaN;
+      const meanX = pairs.reduce((sum, pair) => sum + pair[0], 0) / pairs.length;
+      const meanY = pairs.reduce((sum, pair) => sum + pair[1], 0) / pairs.length;
+      let numerator = 0;
+      let squareX = 0;
+      let squareY = 0;
+      pairs.forEach(([x, y]) => {
+        const dx = x - meanX;
+        const dy = y - meanY;
+        numerator += dx * dy;
+        squareX += dx * dx;
+        squareY += dy * dy;
+      });
+      const denominator = Math.sqrt(squareX * squareY);
+      return denominator > 0 ? numerator / denominator : NaN;
+    }
+
+    function renderDiscoveryEvidence() {
+      if (!mapRegions.size || !regionMap.size) return;
+
+      const agingRanking = rankingForMetric("aging");
+      const youthRanking = rankingForMetric("youth");
+      const babyRanking = rankingForMetric("age0");
+      if (!agingRanking.length || !youthRanking.length || !babyRanking.length) return;
+
+      const agingByName = new Map(agingRanking.map(item => [item.name, item]));
+      const youthByName = new Map(youthRanking.map(item => [item.name, item]));
+      const topAging = agingRanking[0];
+
+      if (topAging.value >= 50) agingDiscoveryTitle.textContent = "두 명 중 한 명이 65세 이상인 동네";
+      else if (topAging.value >= 33.3) agingDiscoveryTitle.textContent = "세 명 중 한 명 이상이 65세 이상인 동네";
+      else agingDiscoveryTitle.textContent = "전국에서 고령화율이 가장 높은 동네";
+
+      const bottomAging = agingRanking.slice(-3).reverse();
+      agingDiscoveryEvidence.innerHTML = `
+        <strong>상위권</strong> · ${summarizeRegions(agingRanking, 3)}<br>
+        <strong>하위권</strong> · ${bottomAging.map((item, index) => `${agingRanking.length - index}위 ${escapeHtml(item.name)} <strong>${rateFormatter.format(item.value)}%</strong>`).join(" · ")}<br>
+        ${strongestProvinceCluster(agingRanking, Math.min(10, agingRanking.length))}
+        <span class="discovery-evidence-note">지도에서 상위권이 군 지역·내륙 농촌에 모이는지, 하위권이 신도시·대도시 생활권에 모이는지 직접 확인해 보세요.</span>`;
+
+      babyDiscoveryEvidence.innerHTML = `
+        <strong>0세 비율 상위권</strong> · ${summarizeRegions(babyRanking, 5)}
+        <span class="discovery-evidence-note">이 값은 출생률이나 출생지 통계가 아니라 현재 해당 지역에 거주하는 0세 인구의 비율입니다. 상위 지역의 신규 주택·전입·가구 형성 자료를 더 찾아야 원인을 판단할 수 있습니다.</span>`;
+
+      const paired = agingRanking
+        .map(item => [item.value, youthByName.get(item.name)?.value])
+        .filter(pair => Number.isFinite(pair[0]) && Number.isFinite(pair[1]));
+      const correlation = pearsonCorrelation(paired);
+      const agingExamples = agingRanking.slice(0, 2).map(item => {
+        const youth = youthByName.get(item.name);
+        return `${escapeHtml(item.name)}(고령 ${rateFormatter.format(item.value)}% · 유소년 ${rateFormatter.format(youth?.value || 0)}%)`;
+      }).join(" · ");
+      const youthTop = youthRanking[0];
+      const youthTopAging = agingByName.get(youthTop.name);
+      const correlationText = Number.isFinite(correlation) ? correlation.toFixed(2) : "계산 불가";
+
+      mirrorDiscoveryEvidence.innerHTML = `
+        <strong>고령화 상위 지역 비교</strong> · ${agingExamples}<br>
+        <strong>유소년 1위</strong> · ${escapeHtml(youthTop.name)} 유소년 <strong>${rateFormatter.format(youthTop.value)}%</strong> · 고령 <strong>${rateFormatter.format(youthTopAging?.value || 0)}%</strong><br>
+        <strong>전국 상관계수</strong> · r = ${correlationText}
+        <span class="discovery-evidence-note">r이 -1에 가까울수록 두 비율이 반대 방향으로 움직이는 경향이 강합니다. 상관관계만으로 원인을 확정할 수는 없으므로 일자리·주택·이동 자료와 함께 해석하세요.</span>`;
+    }
+
+    function updateDiscoveryActiveState() {
+      discoveryMetricButtons.forEach(button => {
+        button.classList.toggle("active", button.dataset.discoveryMetric === mapMetricKey);
+      });
+    }
+
+    function activateDiscoveryMetric(metricKey) {
+      if (!MAP_METRICS[metricKey]) return;
+      mapMetricKey = metricKey;
+      mapMetricSelect.value = metricKey;
+      customAgeControls.hidden = true;
+      top10Toggle.checked = true;
+      mapView = "nation";
+      mapProvince = "";
+      updateMapViewControls();
+      renderMapAnalytics();
+      mapSection.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+        block: "start"
+      });
     }
 
     function availableMapProvinces() {
@@ -1572,6 +1820,8 @@
       customAgeControls.hidden = mapMetricKey !== "custom";
       const definition = currentMapMetricDefinition();
       buildMapRanking();
+      renderDiscoveryEvidence();
+      updateDiscoveryActiveState();
 
       const values = mapRanking.map(item => item.value);
       const minValue = values.length ? Math.min(...values) : 0;
@@ -2247,6 +2497,18 @@
       customAgeControls.hidden = mapMetricKey !== "custom";
       renderMapAnalytics();
     });
+
+    discoveryMetricButtons.forEach(button => button.addEventListener("click", () => {
+      activateDiscoveryMetric(button.dataset.discoveryMetric);
+    }));
+    discoveryRevealButtons.forEach(button => button.addEventListener("click", () => {
+      const target = document.getElementById(button.dataset.evidenceTarget);
+      if (!target) return;
+      const willOpen = target.hidden;
+      target.hidden = !willOpen;
+      button.setAttribute("aria-expanded", String(willOpen));
+      button.textContent = willOpen ? "접기" : "✔ 데이터로 확인";
+    }));
     customStartAge.addEventListener("input", handleCustomAgeChange);
     customEndAge.addEventListener("input", handleCustomAgeChange);
     customStartAge.addEventListener("change", handleCustomAgeChange);
