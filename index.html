@@ -3,10 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>지역별 인구 검색 + 인구 피라미드</title>
+
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
@@ -15,8 +20,11 @@
       background: #f4f6fa;
       color: #172033;
       font-family:
-        Pretendard, "Noto Sans KR", "Apple SD Gothic Neo",
-        "Malgun Gothic", sans-serif;
+        Pretendard,
+        "Noto Sans KR",
+        "Apple SD Gothic Neo",
+        "Malgun Gothic",
+        sans-serif;
     }
 
     .container {
@@ -63,15 +71,17 @@
       border: 1px solid #cfd4dc;
       border-radius: 12px;
       outline: none;
+      background: #ffffff;
       font: inherit;
       font-size: 16px;
-      transition: border-color 0.2s, box-shadow 0.2s;
-      background: #fff;
+      transition:
+        border-color 0.2s,
+        box-shadow 0.2s;
     }
 
     .search-input:focus {
-      border-color: #4169e1;
-      box-shadow: 0 0 0 4px rgba(65, 105, 225, 0.12);
+      border-color: #2563eb;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
     }
 
     .search-button {
@@ -79,7 +89,7 @@
       padding: 0 22px;
       border: 0;
       border-radius: 12px;
-      background: #3157d5;
+      background: #1d4ed8;
       color: #ffffff;
       font: inherit;
       font-weight: 700;
@@ -87,7 +97,7 @@
     }
 
     .search-button:hover {
-      background: #2748b8;
+      background: #1e40af;
     }
 
     .search-button:disabled,
@@ -146,6 +156,14 @@
       background: #edf2ff;
     }
 
+    .population-card.male {
+      background: #eff6ff;
+    }
+
+    .population-card.female {
+      background: #fff1f2;
+    }
+
     .population-label {
       display: block;
       margin-bottom: 9px;
@@ -169,15 +187,15 @@
     }
 
     .chart-card {
-      padding: 18px 18px 8px;
-      border: 1px solid #e9edf5;
+      padding: 20px 18px 10px;
+      border: 1px solid #e3e8f0;
       border-radius: 18px;
-      background: linear-gradient(180deg, #fbfcff 0%, #f7f9fc 100%);
+      background: #f8fafc;
     }
 
     .chart-title {
       margin: 0 0 6px;
-      font-size: 18px;
+      font-size: 19px;
       letter-spacing: -0.02em;
     }
 
@@ -190,7 +208,7 @@
 
     #pyramidChart {
       width: 100%;
-      height: 760px;
+      height: 520px;
     }
 
     @media (max-width: 768px) {
@@ -215,15 +233,17 @@
       }
 
       #pyramidChart {
-        height: 860px;
+        height: 580px;
       }
     }
   </style>
 </head>
+
 <body>
   <main class="container">
     <header class="header">
       <h1>지역별 인구 검색</h1>
+
       <p class="description">
         행정구역을 검색해 총인구·남녀 인구와 인구 피라미드를 확인하세요.
       </p>
@@ -232,18 +252,28 @@
     <section class="panel">
       <form id="searchForm" class="search-form">
         <label for="regionInput" hidden>행정구역</label>
+
         <input
           id="regionInput"
           class="search-input"
           type="text"
           list="regionList"
           value="서울특별시 서초구 방배동"
-          placeholder="예: 서울특별시 종로구"
+          placeholder="예: 서울특별시 서초구 방배동"
           autocomplete="off"
           disabled
         />
+
         <datalist id="regionList"></datalist>
-        <button id="searchButton" class="search-button" type="submit" disabled>검색</button>
+
+        <button
+          id="searchButton"
+          class="search-button"
+          type="submit"
+          disabled
+        >
+          검색
+        </button>
       </form>
 
       <p id="status" class="status" role="status">
@@ -257,22 +287,25 @@
         <div class="population-grid">
           <article class="population-card total">
             <span class="population-label">총인구</span>
+
             <strong class="population-value">
               <span id="totalPopulation">0</span>
               <span class="population-unit">명</span>
             </strong>
           </article>
 
-          <article class="population-card">
+          <article class="population-card male">
             <span class="population-label">남자</span>
+
             <strong class="population-value">
               <span id="malePopulation">0</span>
               <span class="population-unit">명</span>
             </strong>
           </article>
 
-          <article class="population-card">
+          <article class="population-card female">
             <span class="population-label">여자</span>
+
             <strong class="population-value">
               <span id="femalePopulation">0</span>
               <span class="population-unit">명</span>
@@ -282,9 +315,11 @@
 
         <section class="chart-card">
           <h3 class="chart-title">인구 피라미드</h3>
+
           <p class="chart-description">
-            0세부터 100세까지의 1세 단위 인구입니다. 남자는 왼쪽, 여자는 오른쪽에 표시됩니다.
+            연령을 10세 단위로 묶었습니다. 남자는 왼쪽, 여자는 오른쪽입니다.
           </p>
+
           <div id="pyramidChart"></div>
         </section>
       </section>
@@ -294,8 +329,13 @@
   <script>
     "use strict";
 
-    const CSV_URL = "https://raw.githubusercontent.com/greatsong/modudata/main/data/population_latest.csv";
+    const CSV_URL =
+      "https://raw.githubusercontent.com/greatsong/modudata/main/data/population_latest.csv";
+
     const DEFAULT_REGION = "서울특별시 서초구 방배동";
+
+    const MALE_COLOR = "#2563EB";
+    const FEMALE_COLOR = "#E11D48";
 
     const searchForm = document.getElementById("searchForm");
     const regionInput = document.getElementById("regionInput");
@@ -311,7 +351,9 @@
     const pyramidChart = document.getElementById("pyramidChart");
 
     const numberFormatter = new Intl.NumberFormat("ko-KR");
+
     const regionMap = new Map();
+
     let regionNames = [];
     let dataPeriod = "";
 
@@ -321,10 +363,10 @@
       let insideQuotes = false;
 
       for (let i = 0; i < text.length; i += 1) {
-        const ch = text[i];
+        const character = text[i];
 
         if (insideQuotes) {
-          if (ch === '"') {
+          if (character === '"') {
             if (text[i + 1] === '"') {
               field += '"';
               i += 1;
@@ -332,23 +374,25 @@
               insideQuotes = false;
             }
           } else {
-            field += ch;
+            field += character;
           }
+
           continue;
         }
 
-        if (ch === '"') {
+        if (character === '"') {
           insideQuotes = true;
-        } else if (ch === ",") {
+        } else if (character === ",") {
           row.push(field);
           field = "";
-        } else if (ch === "\n") {
+        } else if (character === "\n") {
           row.push(field);
           onRow(row);
+
           row = [];
           field = "";
-        } else if (ch !== "\r") {
-          field += ch;
+        } else if (character !== "\r") {
+          field += character;
         }
       }
 
@@ -381,10 +425,17 @@
     }
 
     function parsePopulationNumber(value) {
-      const cleaned = String(value ?? "").replace(/,/g, "").trim();
-      if (cleaned === "" || cleaned === "-") return 0;
-      const num = Number(cleaned);
-      return Number.isFinite(num) ? num : 0;
+      const cleaned = String(value ?? "")
+        .replace(/,/g, "")
+        .trim();
+
+      if (cleaned === "" || cleaned === "-") {
+        return 0;
+      }
+
+      const number = Number(cleaned);
+
+      return Number.isFinite(number) ? number : 0;
     }
 
     function setStatus(message, isError = false) {
@@ -403,124 +454,255 @@
         .filter((name) => {
           const normalizedName = normalizeRegionName(name);
 
-          if (normalizedName.includes(normalizedQuery)) return true;
+          if (normalizedName.includes(normalizedQuery)) {
+            return true;
+          }
 
-          if (!parentName || baseName.length < 2) return false;
+          if (!parentName || baseName.length < 2) {
+            return false;
+          }
 
           const nameWords = normalizedName.split(" ");
           const nameLastWord = nameWords.at(-1) ?? "";
           const nameParent = nameWords.slice(0, -1).join(" ");
 
-          return nameParent === parentName && nameLastWord.startsWith(baseName);
+          return (
+            nameParent === parentName &&
+            nameLastWord.startsWith(baseName)
+          );
         })
         .slice(0, 5);
     }
 
+    function createAgeGroups(ageValues) {
+      const groups = [];
+
+      for (let startAge = 0; startAge <= 90; startAge += 10) {
+        let population = 0;
+
+        for (
+          let age = startAge;
+          age <= startAge + 9;
+          age += 1
+        ) {
+          population += ageValues[age] || 0;
+        }
+
+        groups.push(population);
+      }
+
+      groups.push(ageValues[100] || 0);
+
+      return groups;
+    }
+
     function buildTickValues(maxValue) {
-      if (maxValue <= 0) return [-1, 0, 1];
+      if (maxValue <= 0) {
+        return [-1, 0, 1];
+      }
 
       const roughStep = maxValue / 4;
-      const magnitude = Math.pow(10, Math.floor(Math.log10(roughStep)));
+      const magnitude = Math.pow(
+        10,
+        Math.floor(Math.log10(roughStep))
+      );
+
       const normalized = roughStep / magnitude;
 
       let step;
-      if (normalized <= 1) step = 1 * magnitude;
-      else if (normalized <= 2) step = 2 * magnitude;
-      else if (normalized <= 5) step = 5 * magnitude;
-      else step = 10 * magnitude;
+
+      if (normalized <= 1) {
+        step = magnitude;
+      } else if (normalized <= 2) {
+        step = 2 * magnitude;
+      } else if (normalized <= 5) {
+        step = 5 * magnitude;
+      } else {
+        step = 10 * magnitude;
+      }
 
       const limit = Math.ceil(maxValue / step) * step;
-      const ticks = [];
-      for (let v = -limit; v <= limit; v += step) {
-        ticks.push(v);
+      const tickValues = [];
+
+      for (
+        let value = -limit;
+        value <= limit;
+        value += step
+      ) {
+        tickValues.push(value);
       }
-      return ticks;
+
+      return tickValues;
     }
 
     function renderPyramid(population) {
-      const ages = [];
-      const maleValues = [];
-      const femaleValues = [];
+      const ageLabels = [
+        "0~9세",
+        "10~19세",
+        "20~29세",
+        "30~39세",
+        "40~49세",
+        "50~59세",
+        "60~69세",
+        "70~79세",
+        "80~89세",
+        "90~99세",
+        "100세 이상"
+      ];
 
-      for (let age = 100; age >= 0; age -= 1) {
-        ages.push(`${age}세`);
-        maleValues.push(-(population.ageMale[age] || 0));
-        femaleValues.push(population.ageFemale[age] || 0);
-      }
+      const groupedMale = createAgeGroups(population.ageMale);
+      const groupedFemale = createAgeGroups(population.ageFemale);
+
+      const maleValues = groupedMale.map(
+        (value) => -value
+      );
+
+      const femaleValues = [...groupedFemale];
 
       const maxValue = Math.max(
-        ...population.ageMale,
-        ...population.ageFemale,
+        ...groupedMale,
+        ...groupedFemale,
         1
       );
 
-      const tickvals = buildTickValues(maxValue);
-      const ticktext = tickvals.map((v) => numberFormatter.format(Math.abs(v)));
+      const tickValues = buildTickValues(maxValue);
 
-      const traceMale = {
+      const tickTexts = tickValues.map((value) =>
+        numberFormatter.format(Math.abs(value))
+      );
+
+      const maleTrace = {
         type: "bar",
         orientation: "h",
         name: "남자",
-        y: ages,
+        y: ageLabels,
         x: maleValues,
+
         marker: {
-          color: "rgba(59,130,246,0.85)"
+          color: MALE_COLOR,
+          line: {
+            color: "#1E40AF",
+            width: 0.5
+          }
         },
-        hovertemplate: "남자 %{y}: %{customdata}명<extra></extra>",
-        customdata: maleValues.map((v) => numberFormatter.format(Math.abs(v)))
+
+        customdata: groupedMale.map((value) =>
+          numberFormatter.format(value)
+        ),
+
+        hovertemplate:
+          "<b>%{y}</b><br>남자: %{customdata}명<extra></extra>"
       };
 
-      const traceFemale = {
+      const femaleTrace = {
         type: "bar",
         orientation: "h",
         name: "여자",
-        y: ages,
+        y: ageLabels,
         x: femaleValues,
+
         marker: {
-          color: "rgba(244,114,182,0.85)"
+          color: FEMALE_COLOR,
+          line: {
+            color: "#9F1239",
+            width: 0.5
+          }
         },
-        hovertemplate: "여자 %{y}: %{x:,}명<extra></extra>"
+
+        customdata: groupedFemale.map((value) =>
+          numberFormatter.format(value)
+        ),
+
+        hovertemplate:
+          "<b>%{y}</b><br>여자: %{customdata}명<extra></extra>"
       };
 
       const layout = {
         barmode: "relative",
-        bargap: 0.08,
+        bargap: 0.16,
+
         paper_bgcolor: "rgba(0,0,0,0)",
         plot_bgcolor: "rgba(0,0,0,0)",
-        margin: { t: 20, r: 20, b: 40, l: 70 },
+
+        margin: {
+          t: 58,
+          r: 24,
+          b: 55,
+          l: 85
+        },
+
         legend: {
           orientation: "h",
           x: 0.5,
           xanchor: "center",
-          y: 1.08,
-          yanchor: "bottom"
+          y: 1.04,
+          yanchor: "bottom",
+
+          font: {
+            size: 14
+          }
         },
+
         xaxis: {
-          title: { text: "인구(명)" },
+          title: {
+            text: "인구(명)",
+            standoff: 12
+          },
+
+          tickvals: tickValues,
+          ticktext: tickTexts,
+
           zeroline: true,
-          zerolinecolor: "rgba(148,163,184,0.6)",
-          gridcolor: "rgba(148,163,184,0.18)",
-          tickvals,
-          ticktext,
-          tickfont: { size: 12 },
-          automargin: true
-        },
-        yaxis: {
-          title: { text: "나이" },
+          zerolinewidth: 1.5,
+          zerolinecolor: "#64748B",
+
+          gridcolor: "rgba(148,163,184,0.25)",
+          gridwidth: 1,
+
+          tickfont: {
+            size: 12
+          },
+
           automargin: true,
-          categoryorder: "array",
-          categoryarray: ages,
-          tickfont: { size: 10 }
+          fixedrange: true
         },
+
+        yaxis: {
+          title: {
+            text: "연령",
+            standoff: 10
+          },
+
+          categoryorder: "array",
+          categoryarray: ageLabels,
+
+          tickfont: {
+            size: 13
+          },
+
+          automargin: true,
+          fixedrange: true
+        },
+
         font: {
-          family: 'Pretendard, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
+          family:
+            'Pretendard, "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif',
           color: "#172033"
+        },
+
+        hoverlabel: {
+          bgcolor: "#ffffff",
+          bordercolor: "#cbd5e1",
+          font: {
+            color: "#172033",
+            size: 13
+          }
         }
       };
 
-      Plotly.newPlot(
+      Plotly.react(
         pyramidChart,
-        [traceMale, traceFemale],
+        [maleTrace, femaleTrace],
         layout,
         {
           displayModeBar: false,
@@ -542,9 +724,13 @@
 
       if (!population) {
         resultElement.hidden = true;
-        Plotly.purge(pyramidChart);
+
+        if (window.Plotly) {
+          Plotly.purge(pyramidChart);
+        }
 
         const suggestions = findSimilarRegions(normalizedQuery);
+
         if (suggestions.length > 0) {
           setStatus(
             `일치하는 지역이 없습니다. 다음 지역을 확인해 보세요: ${suggestions.join(", ")}`,
@@ -556,21 +742,32 @@
             true
           );
         }
+
         return;
       }
 
       regionInput.value = population.name;
       regionTitle.textContent = population.name;
+
       periodElement.textContent = dataPeriod
         ? `${dataPeriod} 주민등록 인구 기준`
         : "주민등록 인구 기준";
 
-      totalPopulation.textContent = numberFormatter.format(population.total);
-      malePopulation.textContent = numberFormatter.format(population.male);
-      femalePopulation.textContent = numberFormatter.format(population.female);
+      totalPopulation.textContent =
+        numberFormatter.format(population.total);
+
+      malePopulation.textContent =
+        numberFormatter.format(population.male);
+
+      femalePopulation.textContent =
+        numberFormatter.format(population.female);
 
       resultElement.hidden = false;
-      setStatus(`${population.name}의 인구 정보를 표시했습니다.`);
+
+      setStatus(
+        `${population.name}의 인구 정보를 표시했습니다.`
+      );
+
       renderPyramid(population);
     }
 
@@ -580,6 +777,7 @@
       for (const name of regionNames) {
         const option = document.createElement("option");
         option.value = name;
+
         fragment.appendChild(option);
       }
 
@@ -588,72 +786,136 @@
 
     async function loadPopulationData() {
       try {
-        const response = await fetch(CSV_URL, { cache: "no-store" });
+        const response = await fetch(CSV_URL, {
+          cache: "no-store"
+        });
+
         if (!response.ok) {
-          throw new Error(`CSV 요청 실패: HTTP ${response.status}`);
+          throw new Error(
+            `CSV 요청 실패: HTTP ${response.status}`
+          );
         }
 
         const arrayBuffer = await response.arrayBuffer();
-        const csvText = new TextDecoder("euc-kr").decode(arrayBuffer);
+
+        const csvText = new TextDecoder(
+          "euc-kr"
+        ).decode(arrayBuffer);
 
         let headers = null;
+
         const maleAgeColumns = [];
         const femaleAgeColumns = [];
 
         parseCSV(csvText, (row) => {
           if (!headers) {
             headers = row.map((header, index) => {
-              const cleaned = String(header ?? "").trim();
-              return index === 0 ? cleaned.replace(/^\uFEFF/, "") : cleaned;
+              const cleanedHeader =
+                String(header ?? "").trim();
+
+              return index === 0
+                ? cleanedHeader.replace(/^\uFEFF/, "")
+                : cleanedHeader;
             });
 
             headers.forEach((header, index) => {
-              const maleMatch = header.match(/^(\d{4}년\d{1,2}월)_남_(\d+)세$/);
-              const femaleMatch = header.match(/^(\d{4}년\d{1,2}월)_여_(\d+)세$/);
-              const male100PlusMatch = header.match(/^(\d{4}년\d{1,2}월)_남_100세\s*이상$/);
-              const female100PlusMatch = header.match(/^(\d{4}년\d{1,2}월)_여_100세\s*이상$/);
+              const maleMatch = header.match(
+                /^(\d{4}년\d{1,2}월)_남_(\d+)세$/
+              );
+
+              const femaleMatch = header.match(
+                /^(\d{4}년\d{1,2}월)_여_(\d+)세$/
+              );
+
+              const male100PlusMatch = header.match(
+                /^(\d{4}년\d{1,2}월)_남_100세\s*이상$/
+              );
+
+              const female100PlusMatch = header.match(
+                /^(\d{4}년\d{1,2}월)_여_100세\s*이상$/
+              );
 
               if (!dataPeriod) {
-                const periodMatch = header.match(/^(\d{4}년\d{1,2}월)_/);
-                if (periodMatch) dataPeriod = periodMatch[1];
+                const periodMatch = header.match(
+                  /^(\d{4}년\d{1,2}월)_/
+                );
+
+                if (periodMatch) {
+                  dataPeriod = periodMatch[1];
+                }
               }
 
               if (maleMatch) {
                 const age = Number(maleMatch[2]);
-                if (age >= 0 && age <= 100) maleAgeColumns.push({ index, age });
+
+                if (age >= 0 && age <= 100) {
+                  maleAgeColumns.push({
+                    index,
+                    age
+                  });
+                }
               } else if (femaleMatch) {
                 const age = Number(femaleMatch[2]);
-                if (age >= 0 && age <= 100) femaleAgeColumns.push({ index, age });
+
+                if (age >= 0 && age <= 100) {
+                  femaleAgeColumns.push({
+                    index,
+                    age
+                  });
+                }
               } else if (male100PlusMatch) {
-                maleAgeColumns.push({ index, age: 100 });
+                maleAgeColumns.push({
+                  index,
+                  age: 100
+                });
               } else if (female100PlusMatch) {
-                femaleAgeColumns.push({ index, age: 100 });
+                femaleAgeColumns.push({
+                  index,
+                  age: 100
+                });
               }
             });
 
             return;
           }
 
-          if (!row.length || row.every((value) => String(value).trim() === "")) {
+          if (
+            !row.length ||
+            row.every(
+              (value) => String(value).trim() === ""
+            )
+          ) {
             return;
           }
 
           const name = cleanRegionName(row[0]);
-          if (!name) return;
+
+          if (!name) {
+            return;
+          }
 
           const ageMale = Array(101).fill(0);
           const ageFemale = Array(101).fill(0);
 
-          for (const col of maleAgeColumns) {
-            ageMale[col.age] += parsePopulationNumber(row[col.index]);
+          for (const column of maleAgeColumns) {
+            ageMale[column.age] +=
+              parsePopulationNumber(row[column.index]);
           }
 
-          for (const col of femaleAgeColumns) {
-            ageFemale[col.age] += parsePopulationNumber(row[col.index]);
+          for (const column of femaleAgeColumns) {
+            ageFemale[column.age] +=
+              parsePopulationNumber(row[column.index]);
           }
 
-          const male = ageMale.reduce((sum, v) => sum + v, 0);
-          const female = ageFemale.reduce((sum, v) => sum + v, 0);
+          const male = ageMale.reduce(
+            (sum, value) => sum + value,
+            0
+          );
+
+          const female = ageFemale.reduce(
+            (sum, value) => sum + value,
+            0
+          );
 
           regionMap.set(normalizeRegionName(name), {
             name,
@@ -666,16 +928,25 @@
         });
 
         if (!headers) {
-          throw new Error("CSV 헤더를 읽지 못했습니다.");
+          throw new Error(
+            "CSV 헤더를 읽지 못했습니다."
+          );
         }
 
-        if (maleAgeColumns.length === 0 || femaleAgeColumns.length === 0) {
-          throw new Error("남녀 연령별 인구 열을 찾지 못했습니다.");
+        if (
+          maleAgeColumns.length === 0 ||
+          femaleAgeColumns.length === 0
+        ) {
+          throw new Error(
+            "남녀 연령별 인구 열을 찾지 못했습니다."
+          );
         }
 
         regionNames = Array.from(regionMap.values())
           .map((item) => item.name)
-          .sort((a, b) => a.localeCompare(b, "ko-KR"));
+          .sort((a, b) =>
+            a.localeCompare(b, "ko-KR")
+          );
 
         createRegionOptions();
 
@@ -683,14 +954,21 @@
         searchButton.disabled = false;
         regionInput.value = DEFAULT_REGION;
 
-        setStatus(`${numberFormatter.format(regionNames.length)}개 행정구역을 불러왔습니다.`);
+        setStatus(
+          `${numberFormatter.format(regionNames.length)}개 행정구역을 불러왔습니다.`
+        );
+
         showRegion(DEFAULT_REGION);
       } catch (error) {
         console.error(error);
+
         regionInput.disabled = true;
         searchButton.disabled = true;
         resultElement.hidden = true;
-        Plotly.purge(pyramidChart);
+
+        if (window.Plotly) {
+          Plotly.purge(pyramidChart);
+        }
 
         setStatus(
           "인구 데이터를 불러오지 못했습니다. 인터넷 연결이나 CSV 주소를 확인해 주세요.",
