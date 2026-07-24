@@ -80,8 +80,8 @@
     }
 
     .search-input:focus {
-      border-color: #2563eb;
-      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+      border-color: #7189a7;
+      box-shadow: 0 0 0 4px rgba(113, 137, 167, 0.14);
     }
 
     .search-button {
@@ -89,7 +89,7 @@
       padding: 0 22px;
       border: 0;
       border-radius: 12px;
-      background: #1d4ed8;
+      background: #586f8c;
       color: #ffffff;
       font: inherit;
       font-weight: 700;
@@ -97,7 +97,7 @@
     }
 
     .search-button:hover {
-      background: #1e40af;
+      background: #465b74;
     }
 
     .search-button:disabled,
@@ -115,7 +115,7 @@
     }
 
     .status.error {
-      color: #c43232;
+      color: #b54747;
     }
 
     .result {
@@ -153,15 +153,15 @@
     }
 
     .population-card.total {
-      background: #edf2ff;
+      background: #eef1f6;
     }
 
     .population-card.male {
-      background: #eff6ff;
+      background: #edf2f7;
     }
 
     .population-card.female {
-      background: #fff1f2;
+      background: #f7eff1;
     }
 
     .population-label {
@@ -208,7 +208,7 @@
 
     #pyramidChart {
       width: 100%;
-      height: 520px;
+      height: 680px;
     }
 
     @media (max-width: 768px) {
@@ -233,7 +233,7 @@
       }
 
       #pyramidChart {
-        height: 580px;
+        height: 760px;
       }
     }
   </style>
@@ -317,7 +317,7 @@
           <h3 class="chart-title">인구 피라미드</h3>
 
           <p class="chart-description">
-            연령을 10세 단위로 묶었습니다. 남자는 왼쪽, 여자는 오른쪽입니다.
+            연령을 5세 단위로 묶었습니다. 남자는 왼쪽, 여자는 오른쪽입니다.
           </p>
 
           <div id="pyramidChart"></div>
@@ -334,8 +334,11 @@
 
     const DEFAULT_REGION = "서울특별시 서초구 방배동";
 
-    const MALE_COLOR = "#2563EB";
-    const FEMALE_COLOR = "#E11D48";
+    const MALE_COLOR = "#7890AC";
+    const MALE_BORDER_COLOR = "#5E748F";
+
+    const FEMALE_COLOR = "#BC8D99";
+    const FEMALE_BORDER_COLOR = "#98717B";
 
     const searchForm = document.getElementById("searchForm");
     const regionInput = document.getElementById("regionInput");
@@ -474,26 +477,38 @@
         .slice(0, 5);
     }
 
-    function createAgeGroups(ageValues) {
+    function createFiveYearAgeGroups(ageValues) {
       const groups = [];
 
-      for (let startAge = 0; startAge <= 90; startAge += 10) {
-        let population = 0;
+      for (let startAge = 0; startAge <= 95; startAge += 5) {
+        let groupPopulation = 0;
 
         for (
           let age = startAge;
-          age <= startAge + 9;
+          age <= startAge + 4;
           age += 1
         ) {
-          population += ageValues[age] || 0;
+          groupPopulation += ageValues[age] || 0;
         }
 
-        groups.push(population);
+        groups.push(groupPopulation);
       }
 
       groups.push(ageValues[100] || 0);
 
       return groups;
+    }
+
+    function createFiveYearAgeLabels() {
+      const labels = [];
+
+      for (let startAge = 0; startAge <= 95; startAge += 5) {
+        labels.push(`${startAge}~${startAge + 4}세`);
+      }
+
+      labels.push("100세 이상");
+
+      return labels;
     }
 
     function buildTickValues(maxValue) {
@@ -502,6 +517,7 @@
       }
 
       const roughStep = maxValue / 4;
+
       const magnitude = Math.pow(
         10,
         Math.floor(Math.log10(roughStep))
@@ -536,22 +552,13 @@
     }
 
     function renderPyramid(population) {
-      const ageLabels = [
-        "0~9세",
-        "10~19세",
-        "20~29세",
-        "30~39세",
-        "40~49세",
-        "50~59세",
-        "60~69세",
-        "70~79세",
-        "80~89세",
-        "90~99세",
-        "100세 이상"
-      ];
+      const ageLabels = createFiveYearAgeLabels();
 
-      const groupedMale = createAgeGroups(population.ageMale);
-      const groupedFemale = createAgeGroups(population.ageFemale);
+      const groupedMale =
+        createFiveYearAgeGroups(population.ageMale);
+
+      const groupedFemale =
+        createFiveYearAgeGroups(population.ageFemale);
 
       const maleValues = groupedMale.map(
         (value) => -value
@@ -581,8 +588,8 @@
         marker: {
           color: MALE_COLOR,
           line: {
-            color: "#1E40AF",
-            width: 0.5
+            color: MALE_BORDER_COLOR,
+            width: 0.6
           }
         },
 
@@ -604,8 +611,8 @@
         marker: {
           color: FEMALE_COLOR,
           line: {
-            color: "#9F1239",
-            width: 0.5
+            color: FEMALE_BORDER_COLOR,
+            width: 0.6
           }
         },
 
@@ -619,7 +626,7 @@
 
       const layout = {
         barmode: "relative",
-        bargap: 0.16,
+        bargap: 0.12,
 
         paper_bgcolor: "rgba(0,0,0,0)",
         plot_bgcolor: "rgba(0,0,0,0)",
@@ -628,7 +635,7 @@
           t: 58,
           r: 24,
           b: 55,
-          l: 85
+          l: 92
         },
 
         legend: {
@@ -653,10 +660,10 @@
           ticktext: tickTexts,
 
           zeroline: true,
-          zerolinewidth: 1.5,
-          zerolinecolor: "#64748B",
+          zerolinewidth: 1.4,
+          zerolinecolor: "#7D8794",
 
-          gridcolor: "rgba(148,163,184,0.25)",
+          gridcolor: "rgba(148,163,184,0.22)",
           gridwidth: 1,
 
           tickfont: {
@@ -677,7 +684,7 @@
           categoryarray: ageLabels,
 
           tickfont: {
-            size: 13
+            size: 12
           },
 
           automargin: true,
@@ -693,6 +700,7 @@
         hoverlabel: {
           bgcolor: "#ffffff",
           bordercolor: "#cbd5e1",
+
           font: {
             color: "#172033",
             size: 13
