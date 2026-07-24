@@ -1,0 +1,59 @@
+name: Validate population dashboard
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "index.html"
+      - "base.html"
+      - "guide-enhancements.js"
+      - "trend-enhancements.js"
+      - ".github/workflows/validate-dashboard.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check JavaScript syntax
+        run: |
+          node --check guide-enhancements.js
+          node --check trend-enhancements.js
+
+      - name: Check loader and required files
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          required = [
+              Path("index.html"),
+              Path("base.html"),
+              Path("guide-enhancements.js"),
+              Path("trend-enhancements.js"),
+          ]
+          for path in required:
+              if not path.exists() or path.stat().st_size == 0:
+                  raise SystemExit(f"Missing or empty file: {path}")
+
+          index = Path("index.html").read_text(encoding="utf-8")
+          for token in ("base.html", "guide-enhancements.js", "trend-enhancements.js", "pako.min.js"):
+              if token not in index:
+                  raise SystemExit(f"Loader reference missing: {token}")
+
+          base = Path("base.html").read_text(encoding="utf-8")
+          for token in ('id="dashboard"', 'function activateTab', 'function focusPop', 'function parseCSV'):
+              if token not in base:
+                  raise SystemExit(f"Base integration point missing: {token}")
+
+          scripts = re.findall(r"<script>(.*?)</script>", index, flags=re.S)
+          if not scripts:
+              raise SystemExit("Inline loader script not found")
+          Path("/tmp/loader.js").write_text(scripts[-1], encoding="utf-8")
+          PY
+          node --check /tmp/loader.js
