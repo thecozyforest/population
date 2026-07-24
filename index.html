@@ -1,11 +1,64 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <title>우리 동네 인구 구조</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>우리 동네 인구</title>
 </head>
 <body>
-  <h1>🏘️ 우리 동네 인구 구조</h1>
-  <p>곧 우리 동네 인구 데이터가 여기에 나타납니다! (레벨 2에서 만들어요)</p>
+  <h1>우리 동네 인구</h1>
+  <input id="q" list="regions" placeholder="동네 이름 입력 (예: 서울특별시 종로구)" style="width:100%;max-width:360px;padding:8px;font-size:16px;">
+  <datalist id="regions"></datalist>
+  <div id="app">데이터 불러오는 중…</div>
+
+<script>
+const 기본지역 = "서울특별시 종로구"; // ← 보고 싶은 지역으로 바꿔도 돼요
+const DATA_URL = "https://raw.githubusercontent.com/greatsong/modudata/main/data/population_latest.csv";
+
+let HEADER = [], INDEX = {};
+const num = s => parseInt(String(s).replace(/[^0-9-]/g,''),10) || 0;   // 따옴표·천단위 쉼표 제거
+// 따옴표로 감싼 CSV 한 줄 파싱 (값 안에 쉼표가 있어 단순 split 불가)
+function parseCSV(line){const o=[];let c='',q=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){if(q&&line[i+1]==='"'){c+='"';i++;}else q=!q;}else if(ch===','&&!q){o.push(c);c='';}else c+=ch;}o.push(c);return o;}
+const cleanName = s => s.replace(/\s*\(\d+\)\s*$/,'').replace(/\s+/g,' ').trim();  // "서울…종로구 (1111…)" → "서울…종로구"
+
+// 한 지역의 남/여/총 인구 합계
+function sums(cells){
+  let male=0, female=0;
+  for(let i=1;i<HEADER.length;i++){
+    if(!/_(\d+)세/.test(HEADER[i])) continue;   // 나이 열만(총인구수·연령구간 제외)
+    const v = num(cells[i]);
+    if(HEADER[i].includes('_남_')) male+=v;
+    else if(HEADER[i].includes('_여_')) female+=v;   // _계_ 무시
+  }
+  return { male, female, total: male+female };
+}
+
+function show(name){
+  const cells = INDEX[name];
+  if(!cells){ document.getElementById('app').textContent = '그 지역을 못 찾았어요. 목록에서 골라보세요.'; return; }
+  const {male,female,total} = sums(cells);
+  document.getElementById('app').innerHTML =
+    `<h2>${name}</h2>
+     <p>총인구: <b>${total.toLocaleString()}</b>명</p>
+     <p>남자 ${male.toLocaleString()}명 · 여자 ${female.toLocaleString()}명</p>`;
+}
+
+(async ()=>{
+  const buf = await (await fetch(DATA_URL)).arrayBuffer();
+  const text = new TextDecoder('euc-kr').decode(buf);   // 행안부 원본은 cp949 인코딩
+  const lines = text.trim().split(/\r?\n/);
+  HEADER = parseCSV(lines[0]);                // 첫 줄은 열 이름
+  const dl = document.getElementById('regions');
+  lines.slice(1).forEach(line=>{
+    const cells = parseCSV(line); const name = cleanName(cells[0]);
+    INDEX[name] = cells;                      // 지역명으로 찾을 수 있게 저장
+    const o = document.createElement('option'); o.value = name; dl.appendChild(o);
+  });
+  const q = document.getElementById('q');
+  q.value = 기본지역;
+  q.addEventListener('input', ()=>{ if(INDEX[q.value]) show(q.value); });
+  show(기본지역);
+})().catch(e=>document.getElementById('app').textContent = '⚠️ ' + e.message);
+</script>
 </body>
 </html>
