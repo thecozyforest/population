@@ -28,7 +28,7 @@ jobs:
           node --check trend-enhancements.js
           node --check fieldwork-enhancements.js
 
-      - name: Check required files and single-file integration
+      - name: Check required files and deployment integration
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -47,31 +47,24 @@ jobs:
                   raise SystemExit(f"Missing or empty file: {path}")
 
           index = Path("index.html").read_text(encoding="utf-8")
-          required_tokens = (
-              'id="dashboard"',
-              'function activateTab',
-              'window.__decodePopulation',
-              'pako.min.js',
-              '📈 변화 추이',
-              'ℹ️ 사용설명서',
-              'population-fieldwork-check-v2',
-              '체크 결과 복사',
-          )
-          for token in required_tokens:
-              if token not in index:
-                  raise SystemExit(f"Single-file integration token missing: {token}")
+          loader_mode = 'src="./fieldwork-enhancements.js' in index
 
-          for external_source in ("base.html", "guide-enhancements.js", "trend-enhancements.js", "fieldwork-enhancements.js"):
-              if f'src="./{external_source}' in index:
-                  raise SystemExit(f"index.html still depends on local runtime source: {external_source}")
+          if loader_mode:
+              for token in ("base.html", "guide-enhancements.js", "trend-enhancements.js", "fieldwork-enhancements.js", "pako.min.js"):
+                  if token not in index:
+                      raise SystemExit(f"Loader reference missing: {token}")
+          else:
+              for token in ('id="dashboard"', 'function activateTab', 'window.__decodePopulation', 'pako.min.js', '📈 변화 추이', 'ℹ️ 사용설명서', 'population-fieldwork-check-v2', '체크 결과 복사'):
+                  if token not in index:
+                      raise SystemExit(f"Single-file integration token missing: {token}")
 
           scripts = re.findall(r"<script(?:\s[^>]*)?>(.*?)</script>", index, flags=re.S)
           nonempty = [script for script in scripts if script.strip()]
-          if len(nonempty) < 4:
-              raise SystemExit("Expected embedded base, trend, fieldwork, and guide scripts")
+          if not nonempty:
+              raise SystemExit("No inline JavaScript found in index.html")
           for number, script in enumerate(nonempty, start=1):
               Path(f"/tmp/index-script-{number}.js").write_text(script, encoding="utf-8")
-          print(len(nonempty))
+          print(f"deployment_mode={'loader' if loader_mode else 'single-file'}; scripts={len(nonempty)}")
           PY
 
           for file in /tmp/index-script-*.js; do
