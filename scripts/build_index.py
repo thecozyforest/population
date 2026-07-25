@@ -2,7 +2,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 base = (ROOT / "base.html").read_text(encoding="utf-8")
-search = (ROOT / "search-enhancements.js").read_text(encoding="utf-8")
+source_db = (ROOT / "source-db-enhancements.js").read_text(encoding="utf-8")
 trend = (ROOT / "trend-enhancements.js").read_text(encoding="utf-8")
 guide = (ROOT / "guide-enhancements.js").read_text(encoding="utf-8")
 fieldwork = (ROOT / "fieldwork-enhancements.js").read_text(encoding="utf-8")
@@ -31,7 +31,7 @@ if "</head>" not in base or "</body>" not in base:
 
 base = base.replace("</head>", head_injection + "\n</head>", 1)
 body_injection = (
-    f"\n<script>\n{search}\n</script>\n"
+    f"\n<script>\n{source_db}\n</script>\n"
     f"<script>\n{trend}\n</script>\n"
     f"<script>\n{fieldwork}\n</script>\n"
     f"<script>\n{guide}\n</script>\n"
@@ -39,4 +39,4 @@ body_injection = (
 base = base.replace("</body>", body_injection + "</body>", 1)
 
 (ROOT / "index.html").write_text(base, encoding="utf-8", newline="\n")
-print("Built index.html from base.html and enhancement scripts")
+print("Built index.html from exact source DB rows and dashboard enhancements")
