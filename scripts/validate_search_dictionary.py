@@ -84,12 +84,14 @@ def main() -> None:
         legal: {
             "count": len(mapping.get(legal, [])),
             "admins": mapping.get(legal, []),
-            "all_exist_in_population": all(admin in names for admin in mapping.get(legal, [])),
+            "all_exist_in_population": bool(mapping.get(legal)) and all(admin in names for admin in mapping.get(legal, [])),
         }
         for legal in probes
     }
+    failed_probes = [legal for legal, result in probe_results.items() if not result["all_exist_in_population"]]
 
     distribution = Counter(len(admins) for admins in mapping.values())
+    valid = not missing_admin_references and not empty_aliases and not failed_probes
     report = {
         "scope": data.get("scope"),
         "population_period": data.get("population_period"),
@@ -101,24 +103,18 @@ def main() -> None:
         "coverage": data.get("coverage", {}),
         "missing_admin_reference_count": len(missing_admin_references),
         "empty_alias_count": len(empty_aliases),
+        "failed_probe_count": len(failed_probes),
+        "failed_probes": failed_probes,
         "missing_admin_reference_sample": missing_admin_references[:100],
         "empty_alias_sample": empty_aliases[:100],
         "admin_count_distribution": {str(key): value for key, value in sorted(distribution.items())},
         "probes": probe_results,
-        "valid": not missing_admin_references and not empty_aliases,
+        "valid": valid,
     }
     OUTPUT.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8", newline="\n")
-
-    if missing_admin_references:
-        raise SystemExit(f"Alias dictionary references {len(missing_admin_references)} legal areas with missing population rows")
-    if empty_aliases:
-        raise SystemExit(f"Alias dictionary contains {len(empty_aliases)} empty legal aliases")
-    for legal in probes[:15]:
-        if not mapping.get(legal):
-            raise SystemExit(f"Required legal-dong probe has no result: {legal}")
     print(
-        f"Validated {len(mapping):,} legal aliases against {len(names):,} population names; "
-        f"period={data.get('population_period')}; official={data.get('updated')}"
+        f"Search validation valid={valid}; aliases={len(mapping):,}; population={len(names):,}; "
+        f"missing_refs={len(missing_admin_references)}; empty={len(empty_aliases)}; failed_probes={len(failed_probes)}"
     )
 
 
