@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import calendar
+import csv
 import io
 import json
 import re
 import sys
 import zipfile
 from collections import defaultdict
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from typing import Iterable
 from urllib.parse import urljoin
@@ -22,24 +24,7 @@ LIST_URL = (
     f"{BASE_URL}/frt/bbs/type001/commonSelectBoardList.do"
     "?bbsId=BBSMSTR_000000000052"
 )
-
-# 최신 게시물 탐색이 일시적으로 실패할 때 사용할 검증된 공식 자료입니다.
-FALLBACK_EFFECTIVE_DATE = "2026-07-20"
-FALLBACK_ARTICLE_URL = (
-    f"{BASE_URL}/frt/bbs/type001/commonSelectBoardArticle.do"
-    "?bbsId=BBSMSTR_000000000052&nttId=127979"
-)
-FALLBACK_ZIP_URL = (
-    f"{BASE_URL}/cmm/fms/FileDown.do"
-    "?atchFileId=FILE_00147311ctH5-ah&fileSn=1"
-)
-
-HEADERS = {
-    "시도명": ("시도명",),
-    "시군구명": ("시군구명",),
-    "읍면동명": ("읍면동명", "행정동명"),
-    "동리명": ("동리명", "법정동명"),
-}
+POPULATION_URL = "https://raw.githubusercontent.com/greatsong/modudata/main/data/population_latest.csv"
 
 SESSION = requests.Session()
 SESSION.headers.update(
@@ -68,12 +53,59 @@ def get_html(url: str) -> str:
     return response.text
 
 
-def discover_latest_source() -> tuple[str, str, str]:
-    """Return effective_date, article_url, non-deleted-code ZIP URL."""
-    try:
-        list_soup = BeautifulSoup(get_html(LIST_URL), "html.parser")
-        articles: list[tuple[int, str]] = []
-        for anchor in list_soup.find_all("a", href=True):
+def decode_flex(content: bytes) -> tuple[str, str]:
+    for encoding in ("utf-8-sig", "cp949", "euc-kr"):
+        try:
+            return content.decode(encoding), encoding
+        except UnicodeDecodeError:
+            continue
+    return content.decode("utf-8", errors="replace"), "utf-8-replace"
+
+
+def load_population_index() -> tuple[dict[str, str], str, date, str]:
+    response = SESSION.get(POPULATION_URL, timeout=180, allow_redirects=True)
+    response.raise_for_status()
+    text, encoding = decode_flex(response.content)
+    reader = csv.reader(io.StringIO(text))
+    headers = next(reader)
+
+    period_match = None
+    for header in headers:
+        period_match = re.search(r"(\d{4})년\s*(\d{1,2})월_(?:계|남|여)_", clean(header))
+        if period_match:
+            break
+    if not period_match:
+        raise RuntimeError("population_latest.csv 헤더에서 기준 연월을 찾지 못했습니다.")
+
+    year, month = map(int, period_match.groups())
+    period = f"{year:04d}-{month:02d}"
+    cutoff = date(year, month, calendar.monthrange(year, month)[1])
+
+    code_to_name: dict[str, str] = {}
+    for row in reader:
+        if not row:
+            continue
+        raw = clean(row[0])
+        match = re.search(r"\((\d{8,12})\)\s*$", raw)
+        if not match:
+            continue
+        code = match.group(1)
+        name = re.sub(r"\s*\(\d{8,12}\)\s*$", "", raw).strip()
+        if name:
+            code_to_name[code] = name
+
+    if len(code_to_name) < 3000:
+        raise RuntimeError(f"인구 CSV 코드 행이 비정상적으로 적습니다: {len(code_to_name)}개")
+    return code_to_name, period, cutoff, encoding
+
+
+def board_article_urls(max_pages: int = 8) -> list[str]:
+    articles: dict[int, str] = {}
+    for page in range(1, max_pages + 1):
+        page_url = f"{LIST_URL}&pageIndex={page}"
+        soup = BeautifulSoup(get_html(page_url), "html.parser")
+        found_on_page = 0
+        for anchor in soup.find_all("a", href=True):
             text = clean(anchor.get_text(" ", strip=True))
             href = anchor.get("href", "")
             if "commonSelectBoardArticle.do" not in href:
@@ -84,49 +116,60 @@ def discover_latest_source() -> tuple[str, str, str]:
             ):
                 continue
             match = re.search(r"nttId=(\d+)", href)
-            if match:
-                articles.append((int(match.group(1)), urljoin(BASE_URL, href)))
-
-        if not articles:
-            raise RuntimeError("행안부 게시판에서 주소코드 게시물을 찾지 못했습니다.")
-
-        _, article_url = max(articles)
-        article_soup = BeautifulSoup(get_html(article_url), "html.parser")
-        downloads: list[tuple[str, str]] = []
-        for anchor in article_soup.find_all("a", href=True):
-            text = clean(anchor.get_text(" ", strip=True))
-            href = anchor.get("href", "")
-            match = re.search(r"jscode(\d{8})\.zip", text, re.IGNORECASE)
-            if not match or "말소" in text:
+            if not match:
                 continue
-            if "FileDown.do" not in href:
-                continue
-            downloads.append((match.group(1), urljoin(BASE_URL, href)))
-
-        if not downloads:
-            raise RuntimeError("최신 게시물에서 말소코드 제외 jscode ZIP을 찾지 못했습니다.")
-
-        yyyymmdd, zip_url = max(downloads)
-        effective_date = f"{yyyymmdd[:4]}-{yyyymmdd[4:6]}-{yyyymmdd[6:]}"
-        return effective_date, article_url, zip_url
-    except Exception as error:
-        print(f"Latest-source discovery failed; using verified fallback: {error}")
-        return FALLBACK_EFFECTIVE_DATE, FALLBACK_ARTICLE_URL, FALLBACK_ZIP_URL
+            articles[int(match.group(1))] = urljoin(BASE_URL, href)
+            found_on_page += 1
+        if page > 1 and found_on_page == 0:
+            break
+    return [url for _, url in sorted(articles.items(), reverse=True)]
 
 
-def find_header_indexes(rows: list[tuple[object, ...]]) -> tuple[int, dict[str, int]]:
-    for row_index, row in enumerate(rows[:30]):
-        normalized = [clean(value).replace(" ", "") for value in row]
-        indexes: dict[str, int] = {}
-        for canonical, variants in HEADERS.items():
-            for variant in variants:
-                target = variant.replace(" ", "")
-                if target in normalized:
-                    indexes[canonical] = normalized.index(target)
-                    break
-        if len(indexes) == len(HEADERS):
-            return row_index, indexes
-    raise RuntimeError("KiKmix 엑셀에서 시도명·시군구명·읍면동명·동리명 헤더를 찾지 못했습니다.")
+def source_from_article(article_url: str) -> tuple[date, str, str] | None:
+    soup = BeautifulSoup(get_html(article_url), "html.parser")
+    candidates: list[tuple[date, str]] = []
+    for anchor in soup.find_all("a", href=True):
+        text = clean(anchor.get_text(" ", strip=True))
+        href = anchor.get("href", "")
+        match = re.search(r"jscode(\d{8})\.zip", text, re.IGNORECASE)
+        if not match or "말소" in text or "FileDown.do" not in href:
+            continue
+        yyyymmdd = match.group(1)
+        effective = datetime.strptime(yyyymmdd, "%Y%m%d").date()
+        candidates.append((effective, urljoin(BASE_URL, href)))
+    if not candidates:
+        return None
+    effective, zip_url = max(candidates)
+    return effective, article_url, zip_url
+
+
+def discover_sources() -> list[tuple[date, str, str]]:
+    sources: list[tuple[date, str, str]] = []
+    errors: list[str] = []
+    for article_url in board_article_urls():
+        try:
+            source = source_from_article(article_url)
+            if source:
+                sources.append(source)
+        except Exception as error:
+            errors.append(f"{article_url}: {error}")
+    unique = {(item[0], item[2]): item for item in sources}
+    ordered = sorted(unique.values(), key=lambda item: item[0], reverse=True)
+    if not ordered:
+        raise RuntimeError("행안부 게시판에서 주소코드 ZIP을 찾지 못했습니다. " + "; ".join(errors[:3]))
+    return ordered
+
+
+def discover_latest_source() -> tuple[str, str, str]:
+    effective, article_url, zip_url = discover_sources()[0]
+    return effective.isoformat(), article_url, zip_url
+
+
+def discover_source_for_cutoff(cutoff: date) -> tuple[date, str, str]:
+    candidates = [source for source in discover_sources() if source[0] <= cutoff]
+    if not candidates:
+        raise RuntimeError(f"인구 기준일 {cutoff.isoformat()} 이전의 공식 주소코드표를 찾지 못했습니다.")
+    return max(candidates, key=lambda item: item[0])
 
 
 def workbook_rows(content: bytes) -> Iterable[tuple[object, ...]]:
@@ -135,58 +178,92 @@ def workbook_rows(content: bytes) -> Iterable[tuple[object, ...]]:
     yield from worksheet.iter_rows(values_only=True)
 
 
-def build_full_names(sido: str, sigungu: str, admin: str, legal: str) -> tuple[str, str] | None:
-    sido, sigungu, admin, legal = map(clean, (sido, sigungu, admin, legal))
-    if not sido or not admin or not legal:
-        return None
+def find_header_indexes(rows: list[tuple[object, ...]]) -> tuple[int, dict[str, int]]:
+    variants = {
+        "admin_code": ("행정동코드", "행정기관코드", "기관코드"),
+        "sido": ("시도명",),
+        "sigungu": ("시군구명",),
+        "admin": ("읍면동명", "행정동명"),
+        "legal_code": ("법정동코드", "관할법정동코드", "동리코드"),
+        "legal": ("동리명", "법정동명"),
+    }
+    for row_index, row in enumerate(rows[:30]):
+        normalized = [clean(value).replace(" ", "") for value in row]
+        indexes: dict[str, int] = {}
+        for canonical, names in variants.items():
+            for name in names:
+                target = name.replace(" ", "")
+                if target in normalized:
+                    indexes[canonical] = normalized.index(target)
+                    break
+        if len(indexes) == len(variants):
+            return row_index, indexes
+    raise RuntimeError("KiKmix에서 행정동코드·법정동코드·지역명 헤더를 찾지 못했습니다.")
 
-    admin_parts = [sido]
+
+def row_value(row: tuple[object, ...], index: int) -> str:
+    if index >= len(row):
+        return ""
+    return clean(row[index])
+
+
+def legal_full_name(sido: str, sigungu: str, admin: str, legal: str) -> str:
+    parts = [sido]
     if sigungu:
-        admin_parts.append(sigungu)
-    admin_parts.append(admin)
-    admin_full = clean(" ".join(admin_parts))
-
-    legal_parts = [sido]
-    if sigungu:
-        legal_parts.append(sigungu)
-
-    # 법정리는 주소상 읍·면을 함께 써야 같은 이름의 리를 구별할 수 있습니다.
+        parts.append(sigungu)
     if legal.endswith("리") and admin.endswith(("읍", "면")):
-        legal_parts.extend([admin, legal])
-    elif legal == admin:
-        legal_parts.append(legal)
+        parts.extend([admin, legal])
     else:
-        legal_parts.append(legal)
-
-    legal_full = clean(" ".join(legal_parts))
-    return legal_full, admin_full
+        parts.append(legal)
+    return clean(" ".join(parts))
 
 
-def parse_kikmix_xlsx(content: bytes) -> dict[str, set[str]]:
+def parse_kikmix_xlsx(
+    content: bytes,
+    population_by_code: dict[str, str],
+) -> tuple[dict[str, set[str]], dict[str, object]]:
     rows = list(workbook_rows(content))
     header_row, indexes = find_header_indexes(rows)
     aliases: dict[str, set[str]] = defaultdict(set)
+    unresolved_codes: dict[str, set[str]] = defaultdict(set)
+    official_admin_codes: set[str] = set()
+    matched_admin_codes: set[str] = set()
 
     for row in rows[header_row + 1 :]:
         if not row:
             continue
-        try:
-            names = build_full_names(
-                row[indexes["시도명"]],
-                row[indexes["시군구명"]],
-                row[indexes["읍면동명"]],
-                row[indexes["동리명"]],
-            )
-        except IndexError:
+        sido = row_value(row, indexes["sido"])
+        sigungu = row_value(row, indexes["sigungu"])
+        admin = row_value(row, indexes["admin"])
+        legal = row_value(row, indexes["legal"])
+        admin_code = re.sub(r"\D", "", row_value(row, indexes["admin_code"]))
+        if not sido or not admin or not legal or not admin_code:
             continue
-        if not names:
-            continue
-        legal_full, admin_full = names
-        aliases[legal_full].add(admin_full)
 
-    if len(aliases) < 1000:
-        raise RuntimeError(f"전국 검색 사전 결과가 비정상적으로 적습니다: {len(aliases)}개")
-    return aliases
+        official_admin_codes.add(admin_code)
+        legal_name = legal_full_name(sido, sigungu, admin, legal)
+        population_name = population_by_code.get(admin_code)
+        if population_name:
+            aliases[legal_name].add(population_name)
+            matched_admin_codes.add(admin_code)
+        else:
+            official_name = clean(" ".join(part for part in (sido, sigungu, admin) if part))
+            unresolved_codes[admin_code].add(official_name)
+
+    if len(aliases) < 10000:
+        raise RuntimeError(f"코드 결합 후 법정동 검색 사전이 비정상적으로 적습니다: {len(aliases)}개")
+
+    stats = {
+        "official_admin_code_count": len(official_admin_codes),
+        "matched_admin_code_count": len(matched_admin_codes),
+        "unmatched_admin_code_count": len(official_admin_codes - matched_admin_codes),
+        "population_code_count": len(population_by_code),
+        "unmatched_admin_sample": [
+            {"code": code, "official_names": sorted(names)}
+            for code, names in sorted(unresolved_codes.items())[:200]
+        ],
+    }
+    return aliases, stats
 
 
 def select_kikmix_xlsx(archive: zipfile.ZipFile) -> str:
@@ -220,21 +297,26 @@ def fetch_zip(url: str, article_url: str) -> bytes:
 
 
 def main() -> None:
-    effective_date, article_url, zip_url = discover_latest_source()
+    population_by_code, population_period, cutoff, population_encoding = load_population_index()
+    effective, article_url, zip_url = discover_source_for_cutoff(cutoff)
     if len(sys.argv) > 1 and sys.argv[1].strip():
         zip_url = sys.argv[1].strip()
 
     content = fetch_zip(zip_url, article_url)
     with zipfile.ZipFile(io.BytesIO(content)) as archive:
         xlsx_name = select_kikmix_xlsx(archive)
-        aliases = parse_kikmix_xlsx(archive.read(xlsx_name))
+        aliases, coverage = parse_kikmix_xlsx(archive.read(xlsx_name), population_by_code)
 
     payload = {
-        "updated": effective_date,
+        "updated": effective.isoformat(),
         "generated": date.today().isoformat(),
-        "scope": "nationwide-official",
+        "scope": "nationwide-official-code-matched",
+        "population_period": population_period,
+        "population_cutoff": cutoff.isoformat(),
+        "population_encoding": population_encoding,
         "source": article_url,
         "download": zip_url,
+        "coverage": coverage,
         "aliases": [
             {"legal": legal, "admins": sorted(admins)}
             for legal, admins in sorted(aliases.items())
@@ -246,9 +328,10 @@ def main() -> None:
         newline="\n",
     )
     print(
-        f"Wrote {OUTPUT.name}: {len(payload['aliases']):,} legal areas, "
-        f"{sum(len(item['admins']) for item in payload['aliases']):,} mappings; "
-        f"effective={effective_date}; source={xlsx_name}"
+        f"Wrote {OUTPUT.name}: {len(payload['aliases']):,} legal areas; "
+        f"population={population_period}; official={effective.isoformat()}; "
+        f"matched={coverage['matched_admin_code_count']:,}/"
+        f"{coverage['official_admin_code_count']:,}; source={xlsx_name}"
     )
 
 
