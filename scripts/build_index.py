@@ -7,6 +7,7 @@ trend = (ROOT / "trend-enhancements.js").read_text(encoding="utf-8")
 trend_source = (ROOT / "trend-source-bridge.js").read_text(encoding="utf-8")
 guide = (ROOT / "guide-enhancements.js").read_text(encoding="utf-8")
 fieldwork = (ROOT / "fieldwork-enhancements.js").read_text(encoding="utf-8")
+credit = (ROOT / "credit-enhancements.js").read_text(encoding="utf-8")
 
 old_decoder = 'new TextDecoder("euc-kr").decode(await r.arrayBuffer())'
 new_decoder = 'window.__decodePopulation(await r.arrayBuffer())'
@@ -37,6 +38,7 @@ body_injection = (
     f"<script>\n{trend_source}\n</script>\n"
     f"<script>\n{fieldwork}\n</script>\n"
     f"<script>\n{guide}\n</script>\n"
+    f"<script>\n{credit}\n</script>\n"
 )
 base = base.replace("</body>", body_injection + "</body>", 1)
 
