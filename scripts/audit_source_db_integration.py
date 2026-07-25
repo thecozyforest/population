@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import io
 import json
 import re
@@ -30,6 +31,7 @@ def clean_name(raw: str) -> str:
 
 def main() -> None:
     content = urllib.request.urlopen(POPULATION_URL, timeout=180).read()
+    source_sha256 = hashlib.sha256(content).hexdigest()
     text, encoding = decode_flex(content)
     rows = list(csv.reader(io.StringIO(text)))
     if len(rows) < 2:
@@ -71,6 +73,8 @@ def main() -> None:
     report = {
         "generated_utc": datetime.now(timezone.utc).isoformat(),
         "source_url": POPULATION_URL,
+        "source_size_bytes": len(content),
+        "source_sha256": source_sha256,
         "encoding": encoding,
         "source_data_row_count": len(data_rows),
         "coded_row_count": len(codes),
