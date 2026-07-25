@@ -304,20 +304,18 @@ initTheme();loadPopulation();
     }
 
     const direct = originalFilterRegions(query);
-    const exact = regionMap.get(norm(text));
-    if (exact) {
-      lastAliasResult = null;
-      return [exact.name];
-    }
-
     const matchedAliases = aliasEntries().filter(entry => matchesLegalQuery(entry, text));
     const aliasNames = dedupeNames(matchedAliases.flatMap(entry => entry.admins));
     const numericNames = dedupeNames(numericDongFallback(text));
+
+    // 법정동과 같은 이름의 행정동이 존재하더라도 거기서 끝내지 않는다.
+    // 직접 검색 결과 + 공식 관할 행정동 전체를 함께 제시한다.
     const combined = dedupeNames([...direct, ...aliasNames, ...numericNames]);
 
-    if (aliasNames.length || numericNames.length) {
+    if (matchedAliases.length || numericNames.length) {
       lastAliasResult = {
         legalNames: matchedAliases.map(entry => entry.legal),
+        aliasNames: new Set(aliasNames.map(norm)),
         count: combined.length,
         usedOfficialTable: matchedAliases.some(entry => officialAliases.includes(entry))
       };
@@ -335,12 +333,19 @@ initTheme();loadPopulation();
         ? `법정동 ${lastAliasResult.legalNames.map(name => `‘${name}’`).join(", ")}`
         : "법정동 분동 이름";
       $("dropdownInfo").textContent = `${legalLabel}의 관할 행정동 ${lastAliasResult.count}개 · 인구 통계는 행정동 기준`;
+
+      document.querySelectorAll(".region-option").forEach((button, index) => {
+        const name = visibleNames[index];
+        if (!name || !lastAliasResult.aliasNames.has(norm(name))) return;
+        const label = button.querySelector("span:last-child");
+        if (label) label.textContent = selectedNames.includes(name) ? "선택됨 · 관할 행정동" : "관할 행정동";
+      });
     }
   };
 
   async function loadOfficialAliases() {
     try {
-      const response = await fetch(`./legal-admin-aliases.json?v=20260720`, { cache: "no-store" });
+      const response = await fetch(`./legal-admin-aliases.json?t=${Date.now()}`, { cache: "no-store" });
       if (!response.ok) return;
       const data = await response.json();
       if (Array.isArray(data)) officialAliases = data;
@@ -351,14 +356,14 @@ initTheme();loadPopulation();
   }
 
   const input = $("regionInput");
-  if (input) input.placeholder = "행정동·법정동 검색: 봉천동, 역삼동, 방배3동";
+  if (input) input.placeholder = "행정동·법정동 검색: 봉천동, 신림동, 방배동";
 
   const status = $("status");
   const selector = status?.parentElement;
   if (selector && !selector.querySelector(".search-basis-note")) {
     const note = document.createElement("div");
     note.className = "search-basis-note";
-    note.innerHTML = "<strong>검색 기준 안내:</strong> 주민등록 인구는 행정동·읍·면 기준입니다. 봉천동·역삼동처럼 법정동으로 검색하면 관할 행정동을 목록으로 보여 줍니다.";
+    note.innerHTML = "<strong>검색 기준 안내:</strong> 주민등록 인구는 행정동·읍·면 기준입니다. 법정동으로 검색하면 이름이 같은 행정동 하나에서 멈추지 않고 공식 관할 행정동 전체를 보여 줍니다.";
     status.after(note);
   }
 
