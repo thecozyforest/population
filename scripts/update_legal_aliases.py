@@ -9,21 +9,28 @@ from collections import defaultdict
 from datetime import date
 from pathlib import Path
 from typing import Iterable
+from urllib.parse import urljoin
 
 import requests
+from bs4 import BeautifulSoup
 from openpyxl import load_workbook
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "legal-admin-aliases.json"
+BASE_URL = "https://www.mois.go.kr"
+LIST_URL = (
+    f"{BASE_URL}/frt/bbs/type001/commonSelectBoardList.do"
+    "?bbsId=BBSMSTR_000000000052"
+)
 
-# 행정안전부 2026-07-20 시행 주소코드1(말소코드 제외)
-DEFAULT_EFFECTIVE_DATE = "2026-07-20"
-DEFAULT_ARTICLE_URL = (
-    "https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do"
+# 최신 게시물 탐색이 일시적으로 실패할 때 사용할 검증된 공식 자료입니다.
+FALLBACK_EFFECTIVE_DATE = "2026-07-20"
+FALLBACK_ARTICLE_URL = (
+    f"{BASE_URL}/frt/bbs/type001/commonSelectBoardArticle.do"
     "?bbsId=BBSMSTR_000000000052&nttId=127979"
 )
-DEFAULT_ZIP_URL = (
-    "https://www.mois.go.kr/cmm/fms/FileDown.do"
+FALLBACK_ZIP_URL = (
+    f"{BASE_URL}/cmm/fms/FileDown.do"
     "?atchFileId=FILE_00147311ctH5-ah&fileSn=1"
 )
 
@@ -34,6 +41,16 @@ HEADERS = {
     "동리명": ("동리명", "법정동명"),
 }
 
+SESSION = requests.Session()
+SESSION.headers.update(
+    {
+        "User-Agent": (
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+            "Chrome/124 Safari/537.36 population-dashboard-updater"
+        )
+    }
+)
+
 
 def clean(value: object) -> str:
     if value is None:
@@ -42,6 +59,59 @@ def clean(value: object) -> str:
     if text.endswith(".0") and text[:-2].isdigit():
         text = text[:-2]
     return re.sub(r"\s+", " ", text)
+
+
+def get_html(url: str) -> str:
+    response = SESSION.get(url, timeout=90, allow_redirects=True)
+    response.raise_for_status()
+    response.encoding = response.apparent_encoding or "utf-8"
+    return response.text
+
+
+def discover_latest_source() -> tuple[str, str, str]:
+    """Return effective_date, article_url, non-deleted-code ZIP URL."""
+    try:
+        list_soup = BeautifulSoup(get_html(LIST_URL), "html.parser")
+        articles: list[tuple[int, str]] = []
+        for anchor in list_soup.find_all("a", href=True):
+            text = clean(anchor.get_text(" ", strip=True))
+            href = anchor.get("href", "")
+            if "commonSelectBoardArticle.do" not in href:
+                continue
+            if not (
+                ("행정기관" in text and "관할구역" in text)
+                or "주민등록주소코드" in text
+            ):
+                continue
+            match = re.search(r"nttId=(\d+)", href)
+            if match:
+                articles.append((int(match.group(1)), urljoin(BASE_URL, href)))
+
+        if not articles:
+            raise RuntimeError("행안부 게시판에서 주소코드 게시물을 찾지 못했습니다.")
+
+        _, article_url = max(articles)
+        article_soup = BeautifulSoup(get_html(article_url), "html.parser")
+        downloads: list[tuple[str, str]] = []
+        for anchor in article_soup.find_all("a", href=True):
+            text = clean(anchor.get_text(" ", strip=True))
+            href = anchor.get("href", "")
+            match = re.search(r"jscode(\d{8})\.zip", text, re.IGNORECASE)
+            if not match or "말소" in text:
+                continue
+            if "FileDown.do" not in href:
+                continue
+            downloads.append((match.group(1), urljoin(BASE_URL, href)))
+
+        if not downloads:
+            raise RuntimeError("최신 게시물에서 말소코드 제외 jscode ZIP을 찾지 못했습니다.")
+
+        yyyymmdd, zip_url = max(downloads)
+        effective_date = f"{yyyymmdd[:4]}-{yyyymmdd[4:6]}-{yyyymmdd[6:]}"
+        return effective_date, article_url, zip_url
+    except Exception as error:
+        print(f"Latest-source discovery failed; using verified fallback: {error}")
+        return FALLBACK_EFFECTIVE_DATE, FALLBACK_ARTICLE_URL, FALLBACK_ZIP_URL
 
 
 def find_header_indexes(rows: list[tuple[object, ...]]) -> tuple[int, dict[str, int]]:
@@ -80,7 +150,7 @@ def build_full_names(sido: str, sigungu: str, admin: str, legal: str) -> tuple[s
     if sigungu:
         legal_parts.append(sigungu)
 
-    # 법정리는 주소상 읍·면을 함께 써야 구별됩니다.
+    # 법정리는 주소상 읍·면을 함께 써야 같은 이름의 리를 구별할 수 있습니다.
     if legal.endswith("리") and admin.endswith(("읍", "면")):
         legal_parts.extend([admin, legal])
     elif legal == admin:
@@ -134,18 +204,12 @@ def select_kikmix_xlsx(archive: zipfile.ZipFile) -> str:
     return candidates[0]
 
 
-def fetch_zip(url: str) -> bytes:
-    response = requests.get(
+def fetch_zip(url: str, article_url: str) -> bytes:
+    response = SESSION.get(
         url,
         timeout=120,
         allow_redirects=True,
-        headers={
-            "User-Agent": (
-                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                "Chrome/124 Safari/537.36 population-dashboard-updater"
-            ),
-            "Referer": DEFAULT_ARTICLE_URL,
-        },
+        headers={"Referer": article_url},
     )
     response.raise_for_status()
     content = response.content
@@ -156,20 +220,20 @@ def fetch_zip(url: str) -> bytes:
 
 
 def main() -> None:
-    zip_url = DEFAULT_ZIP_URL
+    effective_date, article_url, zip_url = discover_latest_source()
     if len(sys.argv) > 1 and sys.argv[1].strip():
         zip_url = sys.argv[1].strip()
 
-    content = fetch_zip(zip_url)
+    content = fetch_zip(zip_url, article_url)
     with zipfile.ZipFile(io.BytesIO(content)) as archive:
         xlsx_name = select_kikmix_xlsx(archive)
         aliases = parse_kikmix_xlsx(archive.read(xlsx_name))
 
     payload = {
-        "updated": DEFAULT_EFFECTIVE_DATE,
+        "updated": effective_date,
         "generated": date.today().isoformat(),
         "scope": "nationwide-official",
-        "source": DEFAULT_ARTICLE_URL,
+        "source": article_url,
         "download": zip_url,
         "aliases": [
             {"legal": legal, "admins": sorted(admins)}
@@ -183,7 +247,8 @@ def main() -> None:
     )
     print(
         f"Wrote {OUTPUT.name}: {len(payload['aliases']):,} legal areas, "
-        f"{sum(len(item['admins']) for item in payload['aliases']):,} mappings; source={xlsx_name}"
+        f"{sum(len(item['admins']) for item in payload['aliases']):,} mappings; "
+        f"effective={effective_date}; source={xlsx_name}"
     )
 
 
