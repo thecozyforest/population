@@ -39,7 +39,7 @@ jobs:
             echo "Audit report was not created."
             exit 1
           fi
-          if git diff --quiet -- source-db-validation.json; then
+          if [ -z "$(git status --porcelain -- source-db-validation.json)" ]; then
             echo "Audit report is unchanged."
           else
             git config user.name "github-actions[bot]"
