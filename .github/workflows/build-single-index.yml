@@ -10,6 +10,7 @@ on:
       - "trend-enhancements.js"
       - "trend-source-bridge.js"
       - "fieldwork-enhancements.js"
+      - "credit-enhancements.js"
       - "scripts/build_index.py"
       - ".github/workflows/build-single-index.yml"
   workflow_dispatch:
