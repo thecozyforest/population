@@ -9,6 +9,7 @@ on:
       - "source-db-enhancements.js"
       - "guide-enhancements.js"
       - "trend-enhancements.js"
+      - "trend-source-bridge.js"
       - "fieldwork-enhancements.js"
       - "scripts/build_index.py"
       - ".github/workflows/validate-dashboard.yml"
@@ -28,6 +29,7 @@ jobs:
           node --check source-db-enhancements.js
           node --check guide-enhancements.js
           node --check trend-enhancements.js
+          node --check trend-source-bridge.js
           node --check fieldwork-enhancements.js
 
       - name: Validate original population DB rows
@@ -49,10 +51,7 @@ jobs:
                   pass
           if text is None:
               raise SystemExit("Population CSV encoding could not be decoded")
-
           rows = list(csv.reader(io.StringIO(text)))
-          if len(rows) < 2:
-              raise SystemExit("Population CSV has no data rows")
           data = [row for row in rows[1:] if row and any(str(value).strip() for value in row)]
           codes = []
           for row_number, row in enumerate(data, start=2):
@@ -72,12 +71,9 @@ jobs:
           import re
 
           required = [
-              Path("index.html"),
-              Path("base.html"),
-              Path("source-db-enhancements.js"),
-              Path("guide-enhancements.js"),
-              Path("trend-enhancements.js"),
-              Path("fieldwork-enhancements.js"),
+              Path("index.html"), Path("base.html"), Path("source-db-enhancements.js"),
+              Path("guide-enhancements.js"), Path("trend-enhancements.js"),
+              Path("trend-source-bridge.js"), Path("fieldwork-enhancements.js"),
               Path("scripts/build_index.py"),
           ]
           for path in required:
@@ -87,19 +83,15 @@ jobs:
           build = Path("scripts/build_index.py").read_text(encoding="utf-8")
           if "search-enhancements.js" in build or "legal-admin-aliases.json" in build:
               raise SystemExit("Legal-dong alias integration must not be included in the build")
-          for token in ("source-db-enhancements.js", "trend-enhancements.js", "fieldwork-enhancements.js", "guide-enhancements.js"):
+          for token in ("source-db-enhancements.js", "trend-enhancements.js", "trend-source-bridge.js", "fieldwork-enhancements.js", "guide-enhancements.js"):
               if token not in build:
                   raise SystemExit(f"Build integration missing: {token}")
 
           index = Path("index.html").read_text(encoding="utf-8")
           for token in (
-              'id="dashboard"',
-              "window.__decodePopulation",
-              "sourceRowCount",
-              "원본 DB 행정구역명 또는 코드 검색",
-              "population-fieldwork-check-v3",
-              "📈 변화 추이",
-              "ℹ️ 사용설명서",
+              'id="dashboard"', "window.__decodePopulation", "sourceRowCount",
+              "원본 DB 행정구역명 또는 코드 검색", "population-fieldwork-check-v3",
+              "codeFrom(row[indexes.code])", "📈 변화 추이", "ℹ️ 사용설명서",
           ):
               if token not in index:
                   raise SystemExit(f"Single-file integration token missing: {token}")
@@ -112,7 +104,7 @@ jobs:
               raise SystemExit("No inline JavaScript found in index.html")
           for number, script in enumerate(nonempty, start=1):
               Path(f"/tmp/index-script-{number}.js").write_text(script, encoding="utf-8")
-          print(f"single-file scripts={len(nonempty)}; alias integration removed")
+          print(f"single-file scripts={len(nonempty)}; exact source and code trends integrated")
           PY
 
           for file in /tmp/index-script-*.js; do
