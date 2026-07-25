@@ -64,13 +64,15 @@
       .replace(/제주특별자치도/g, "제주")
       .replace(/전북특별자치도/g, "전북")
       .replace(/강원특별자치도/g, "강원")
+      .replace(/[ㆍ·,]/g, ".")
+      .replace(/제(?=\d+(?:\.\d+)?동)/g, "")
       .replace(/\s+/g, " ")
       .trim();
   }
 
   function compactAdministrativeLeaf(value) {
-    const leaf = clean(value).split(" ").at(-1) || "";
-    return leaf.replace(/제?\d+동$/, "동");
+    const leaf = normalizedSearchText(clean(value).split(" ").at(-1) || "");
+    return leaf.replace(/\d+(?:\.\d+)?동$/, "동");
   }
 
   function dedupeNames(names) {
@@ -94,15 +96,27 @@
     return [...merged.values()].map(entry => ({ ...entry, admins: [...new Set(entry.admins)] }));
   }
 
+  function queryWords(query) {
+    return normalizedSearchText(query).split(/\s+/).filter(Boolean);
+  }
+
   function matchesLegalQuery(entry, query) {
     const candidate = normalizedSearchText(entry.legal);
-    const words = normalizedSearchText(query).split(/\s+/).filter(Boolean);
+    const words = queryWords(query);
     return words.length > 0 && words.every(word => candidate.includes(word));
   }
 
+  function canonicalRegionMatches(query) {
+    const words = queryWords(query);
+    if (!words.length) return [];
+    return regionNames.filter(name => {
+      const candidate = normalizedSearchText(name);
+      return words.every(word => candidate.includes(word));
+    });
+  }
+
   function numericDongFallback(query) {
-    const q = normalizedSearchText(query);
-    const words = q.split(/\s+/).filter(Boolean);
+    const words = queryWords(query);
     const queryLeaf = words.at(-1) || "";
     if (!queryLeaf.endsWith("동") || /\d/.test(queryLeaf)) return [];
 
@@ -110,7 +124,7 @@
     return regionNames.filter(name => {
       const candidate = normalizedSearchText(name);
       if (!parentWords.every(word => candidate.includes(word))) return false;
-      return compactAdministrativeLeaf(name).toLocaleLowerCase("ko-KR") === queryLeaf;
+      return compactAdministrativeLeaf(name) === queryLeaf;
     });
   }
 
@@ -122,13 +136,14 @@
     }
 
     const direct = originalFilterRegions(query);
+    const canonicalDirect = canonicalRegionMatches(query);
     const matchedAliases = aliasEntries().filter(entry => matchesLegalQuery(entry, text));
     const aliasNames = dedupeNames(matchedAliases.flatMap(entry => entry.admins));
     const numericNames = dedupeNames(numericDongFallback(text));
 
     // 법정동과 같은 이름의 행정동이 존재하더라도 거기서 끝내지 않는다.
-    // 직접 검색 결과 + 공식 관할 행정동 전체를 함께 제시한다.
-    const combined = dedupeNames([...direct, ...aliasNames, ...numericNames]);
+    // 직접 검색 결과 + 표기 변형 + 공식 관할 행정동 전체를 함께 제시한다.
+    const combined = dedupeNames([...direct, ...canonicalDirect, ...aliasNames, ...numericNames]);
 
     if (matchedAliases.length || numericNames.length) {
       lastAliasResult = {
@@ -150,7 +165,7 @@
       const legalLabel = lastAliasResult.legalNames.length
         ? `법정동 ${lastAliasResult.legalNames.map(name => `‘${name}’`).join(", ")}`
         : "법정동 분동 이름";
-      $("dropdownInfo").textContent = `${legalLabel}의 관할 행정동 ${lastAliasResult.count}개 · 인구 통계는 행정동 기준`;
+      $("dropdownInfo").textContent = `${legalLabel}의 관할 행정동 ${lastAliasResult.count}개 · 아래 수치는 각 행정동 전체 인구`;
 
       document.querySelectorAll(".region-option").forEach((button, index) => {
         const name = visibleNames[index];
@@ -174,14 +189,14 @@
   }
 
   const input = $("regionInput");
-  if (input) input.placeholder = "행정동·법정동 검색: 봉천동, 신림동, 방배동";
+  if (input) input.placeholder = "행정동·법정동 검색: 봉천동, 신림동, 화곡1동";
 
   const status = $("status");
   const selector = status?.parentElement;
   if (selector && !selector.querySelector(".search-basis-note")) {
     const note = document.createElement("div");
     note.className = "search-basis-note";
-    note.innerHTML = "<strong>검색 기준 안내:</strong> 주민등록 인구는 행정동·읍·면 기준입니다. 법정동으로 검색하면 이름이 같은 행정동 하나에서 멈추지 않고 공식 관할 행정동 전체를 보여 줍니다.";
+    note.innerHTML = "<strong>검색 기준 안내:</strong> 주민등록 인구는 행정동·읍·면 기준입니다. 법정동으로 검색하면 공식 관할 행정동 전체를 보여 주며, 표시되는 수치는 해당 법정동만의 인구가 아니라 각 행정동 전체 인구입니다. ‘화곡1동’처럼 ‘제’를 생략한 입력도 검색합니다.";
     status.after(note);
   }
 
