@@ -8,6 +8,7 @@ on:
       - "source-db-enhancements.js"
       - "guide-enhancements.js"
       - "trend-enhancements.js"
+      - "trend-source-bridge.js"
       - "fieldwork-enhancements.js"
       - "scripts/build_index.py"
       - ".github/workflows/build-single-index.yml"
