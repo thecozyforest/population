@@ -5,7 +5,7 @@ on:
     branches: [main]
     paths:
       - "base.html"
-      - "search-enhancements.js"
+      - "source-db-enhancements.js"
       - "guide-enhancements.js"
       - "trend-enhancements.js"
       - "fieldwork-enhancements.js"
