@@ -16,6 +16,10 @@ OUTPUT = ROOT / "region-search-validation.json"
 POPULATION_URL = "https://raw.githubusercontent.com/greatsong/modudata/main/data/population_latest.csv"
 
 
+def clean_name(value: str) -> str:
+    return re.sub(r"\s+", " ", str(value or "")).strip()
+
+
 def decode_flex(content: bytes) -> str:
     for encoding in ("utf-8-sig", "cp949", "euc-kr"):
         try:
@@ -35,8 +39,8 @@ def population_index() -> tuple[set[str], dict[str, str]]:
     for row in reader:
         if not row:
             continue
-        raw = row[0].strip()
-        name = re.sub(r"\s*\(\d{8,12}\)\s*$", "", raw).strip()
+        raw = clean_name(row[0])
+        name = clean_name(re.sub(r"\s*\(\d{8,12}\)\s*$", "", raw))
         match = re.search(r"\((\d{8,12})\)\s*$", raw)
         if name:
             names.add(name)
@@ -61,7 +65,10 @@ def candidate_names(missing: str, names: set[str]) -> list[str]:
 def main() -> None:
     data = json.loads(ALIASES_PATH.read_text(encoding="utf-8"))
     aliases = data.get("aliases", [])
-    mapping = {item["legal"]: list(dict.fromkeys(item.get("admins", []))) for item in aliases}
+    mapping = {
+        clean_name(item["legal"]): list(dict.fromkeys(clean_name(admin) for admin in item.get("admins", [])))
+        for item in aliases
+    }
     names, code_to_name = population_index()
 
     missing_admin_references = []
