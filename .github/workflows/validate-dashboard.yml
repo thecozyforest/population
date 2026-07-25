@@ -6,13 +6,11 @@ on:
     paths:
       - "index.html"
       - "base.html"
-      - "search-enhancements.js"
-      - "legal-admin-aliases.json"
+      - "source-db-enhancements.js"
       - "guide-enhancements.js"
       - "trend-enhancements.js"
       - "fieldwork-enhancements.js"
       - "scripts/build_index.py"
-      - "scripts/update_legal_aliases.py"
       - ".github/workflows/validate-dashboard.yml"
   workflow_dispatch:
 
@@ -27,70 +25,86 @@ jobs:
 
       - name: Check enhancement JavaScript syntax
         run: |
-          node --check search-enhancements.js
+          node --check source-db-enhancements.js
           node --check guide-enhancements.js
           node --check trend-enhancements.js
           node --check fieldwork-enhancements.js
 
-      - name: Check required files and deployment integration
+      - name: Validate original population DB rows
+        run: |
+          python - <<'PY'
+          import csv
+          import io
+          import re
+          import urllib.request
+
+          url = "https://raw.githubusercontent.com/greatsong/modudata/main/data/population_latest.csv"
+          content = urllib.request.urlopen(url, timeout=180).read()
+          text = None
+          for encoding in ("utf-8-sig", "cp949", "euc-kr"):
+              try:
+                  text = content.decode(encoding)
+                  break
+              except UnicodeDecodeError:
+                  pass
+          if text is None:
+              raise SystemExit("Population CSV encoding could not be decoded")
+
+          rows = list(csv.reader(io.StringIO(text)))
+          if len(rows) < 2:
+              raise SystemExit("Population CSV has no data rows")
+          data = [row for row in rows[1:] if row and any(str(value).strip() for value in row)]
+          codes = []
+          for row_number, row in enumerate(data, start=2):
+              match = re.search(r"\((\d{8,12})\)\s*$", row[0].strip())
+              if not match:
+                  raise SystemExit(f"Missing original region code at CSV row {row_number}: {row[0]!r}")
+              codes.append(match.group(1))
+          if len(codes) != len(set(codes)):
+              raise SystemExit(f"Duplicate original codes: rows={len(codes)}, unique={len(set(codes))}")
+          print(f"Original DB rows={len(data):,}; unique codes={len(set(codes)):,}")
+          PY
+
+      - name: Check required files and single-file integration
         run: |
           python - <<'PY'
           from pathlib import Path
-          import json
           import re
 
           required = [
               Path("index.html"),
               Path("base.html"),
-              Path("search-enhancements.js"),
-              Path("legal-admin-aliases.json"),
+              Path("source-db-enhancements.js"),
               Path("guide-enhancements.js"),
               Path("trend-enhancements.js"),
               Path("fieldwork-enhancements.js"),
               Path("scripts/build_index.py"),
-              Path("scripts/update_legal_aliases.py"),
           ]
           for path in required:
               if not path.exists() or path.stat().st_size == 0:
                   raise SystemExit(f"Missing or empty file: {path}")
 
-          aliases = json.loads(Path("legal-admin-aliases.json").read_text(encoding="utf-8"))
-          if not isinstance(aliases.get("aliases"), list):
-              raise SystemExit("legal-admin-aliases.json has no aliases list")
-          봉천 = next((item for item in aliases["aliases"] if item.get("legal") == "서울특별시 관악구 봉천동"), None)
-          if not 봉천 or len(봉천.get("admins", [])) < 9:
-              raise SystemExit("봉천동 administrative-dong mapping is missing or incomplete")
+          build = Path("scripts/build_index.py").read_text(encoding="utf-8")
+          if "search-enhancements.js" in build or "legal-admin-aliases.json" in build:
+              raise SystemExit("Legal-dong alias integration must not be included in the build")
+          for token in ("source-db-enhancements.js", "trend-enhancements.js", "fieldwork-enhancements.js", "guide-enhancements.js"):
+              if token not in build:
+                  raise SystemExit(f"Build integration missing: {token}")
 
           index = Path("index.html").read_text(encoding="utf-8")
-          loader_mode = 'src="./fieldwork-enhancements.js' in index
-
-          if loader_mode:
-              for token in (
-                  "base.html",
-                  "search-enhancements.js",
-                  "guide-enhancements.js",
-                  "trend-enhancements.js",
-                  "fieldwork-enhancements.js",
-                  "pako.min.js",
-              ):
-                  if token not in index:
-                      raise SystemExit(f"Loader reference missing: {token}")
-          else:
-              for token in (
-                  'id="dashboard"',
-                  "function activateTab",
-                  "window.__decodePopulation",
-                  "pako.min.js",
-                  "BOOTSTRAP_ALIASES",
-                  "서울특별시 관악구 봉천동",
-                  "검색 기준 안내",
-                  "📈 변화 추이",
-                  "ℹ️ 사용설명서",
-                  "population-fieldwork-check-v2",
-                  "체크 결과 복사",
-              ):
-                  if token not in index:
-                      raise SystemExit(f"Single-file integration token missing: {token}")
+          for token in (
+              'id="dashboard"',
+              "window.__decodePopulation",
+              "sourceRowCount",
+              "원본 DB 행정구역명 또는 코드 검색",
+              "population-fieldwork-check-v3",
+              "📈 변화 추이",
+              "ℹ️ 사용설명서",
+          ):
+              if token not in index:
+                  raise SystemExit(f"Single-file integration token missing: {token}")
+          if "BOOTSTRAP_ALIASES" in index or "legal-admin-aliases.json" in index:
+              raise SystemExit("Alias search code remains in the deployed index")
 
           scripts = re.findall(r"<script(?:\s[^>]*)?>(.*?)</script>", index, flags=re.S)
           nonempty = [script for script in scripts if script.strip()]
@@ -98,10 +112,7 @@ jobs:
               raise SystemExit("No inline JavaScript found in index.html")
           for number, script in enumerate(nonempty, start=1):
               Path(f"/tmp/index-script-{number}.js").write_text(script, encoding="utf-8")
-          print(
-              f"deployment_mode={'loader' if loader_mode else 'single-file'}; "
-              f"scripts={len(nonempty)}; aliases={len(aliases['aliases'])}"
-          )
+          print(f"single-file scripts={len(nonempty)}; alias integration removed")
           PY
 
           for file in /tmp/index-script-*.js; do
