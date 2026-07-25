@@ -6,10 +6,13 @@ on:
     paths:
       - "index.html"
       - "base.html"
+      - "search-enhancements.js"
+      - "legal-admin-aliases.json"
       - "guide-enhancements.js"
       - "trend-enhancements.js"
       - "fieldwork-enhancements.js"
       - "scripts/build_index.py"
+      - "scripts/update_legal_aliases.py"
       - ".github/workflows/validate-dashboard.yml"
   workflow_dispatch:
 
@@ -24,6 +27,7 @@ jobs:
 
       - name: Check enhancement JavaScript syntax
         run: |
+          node --check search-enhancements.js
           node --check guide-enhancements.js
           node --check trend-enhancements.js
           node --check fieldwork-enhancements.js
@@ -32,29 +36,59 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import json
           import re
 
           required = [
               Path("index.html"),
               Path("base.html"),
+              Path("search-enhancements.js"),
+              Path("legal-admin-aliases.json"),
               Path("guide-enhancements.js"),
               Path("trend-enhancements.js"),
               Path("fieldwork-enhancements.js"),
               Path("scripts/build_index.py"),
+              Path("scripts/update_legal_aliases.py"),
           ]
           for path in required:
               if not path.exists() or path.stat().st_size == 0:
                   raise SystemExit(f"Missing or empty file: {path}")
 
+          aliases = json.loads(Path("legal-admin-aliases.json").read_text(encoding="utf-8"))
+          if not isinstance(aliases.get("aliases"), list):
+              raise SystemExit("legal-admin-aliases.json has no aliases list")
+          봉천 = next((item for item in aliases["aliases"] if item.get("legal") == "서울특별시 관악구 봉천동"), None)
+          if not 봉천 or len(봉천.get("admins", [])) < 9:
+              raise SystemExit("봉천동 administrative-dong mapping is missing or incomplete")
+
           index = Path("index.html").read_text(encoding="utf-8")
           loader_mode = 'src="./fieldwork-enhancements.js' in index
 
           if loader_mode:
-              for token in ("base.html", "guide-enhancements.js", "trend-enhancements.js", "fieldwork-enhancements.js", "pako.min.js"):
+              for token in (
+                  "base.html",
+                  "search-enhancements.js",
+                  "guide-enhancements.js",
+                  "trend-enhancements.js",
+                  "fieldwork-enhancements.js",
+                  "pako.min.js",
+              ):
                   if token not in index:
                       raise SystemExit(f"Loader reference missing: {token}")
           else:
-              for token in ('id="dashboard"', 'function activateTab', 'window.__decodePopulation', 'pako.min.js', '📈 변화 추이', 'ℹ️ 사용설명서', 'population-fieldwork-check-v2', '체크 결과 복사'):
+              for token in (
+                  'id="dashboard"',
+                  "function activateTab",
+                  "window.__decodePopulation",
+                  "pako.min.js",
+                  "BOOTSTRAP_ALIASES",
+                  "서울특별시 관악구 봉천동",
+                  "검색 기준 안내",
+                  "📈 변화 추이",
+                  "ℹ️ 사용설명서",
+                  "population-fieldwork-check-v2",
+                  "체크 결과 복사",
+              ):
                   if token not in index:
                       raise SystemExit(f"Single-file integration token missing: {token}")
 
@@ -64,7 +98,10 @@ jobs:
               raise SystemExit("No inline JavaScript found in index.html")
           for number, script in enumerate(nonempty, start=1):
               Path(f"/tmp/index-script-{number}.js").write_text(script, encoding="utf-8")
-          print(f"deployment_mode={'loader' if loader_mode else 'single-file'}; scripts={len(nonempty)}")
+          print(
+              f"deployment_mode={'loader' if loader_mode else 'single-file'}; "
+              f"scripts={len(nonempty)}; aliases={len(aliases['aliases'])}"
+          )
           PY
 
           for file in /tmp/index-script-*.js; do
