@@ -4,6 +4,7 @@ ROOT = Path(__file__).resolve().parents[1]
 base = (ROOT / "base.html").read_text(encoding="utf-8")
 source_db = (ROOT / "source-db-enhancements.js").read_text(encoding="utf-8")
 trend = (ROOT / "trend-enhancements.js").read_text(encoding="utf-8")
+trend_source = (ROOT / "trend-source-bridge.js").read_text(encoding="utf-8")
 guide = (ROOT / "guide-enhancements.js").read_text(encoding="utf-8")
 fieldwork = (ROOT / "fieldwork-enhancements.js").read_text(encoding="utf-8")
 
@@ -33,6 +34,7 @@ base = base.replace("</head>", head_injection + "\n</head>", 1)
 body_injection = (
     f"\n<script>\n{source_db}\n</script>\n"
     f"<script>\n{trend}\n</script>\n"
+    f"<script>\n{trend_source}\n</script>\n"
     f"<script>\n{fieldwork}\n</script>\n"
     f"<script>\n{guide}\n</script>\n"
 )
