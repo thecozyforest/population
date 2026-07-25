@@ -1,0 +1,191 @@
+from __future__ import annotations
+
+import io
+import json
+import re
+import sys
+import zipfile
+from collections import defaultdict
+from datetime import date
+from pathlib import Path
+from typing import Iterable
+
+import requests
+from openpyxl import load_workbook
+
+ROOT = Path(__file__).resolve().parents[1]
+OUTPUT = ROOT / "legal-admin-aliases.json"
+
+# 행정안전부 2026-07-20 시행 주소코드1(말소코드 제외)
+DEFAULT_EFFECTIVE_DATE = "2026-07-20"
+DEFAULT_ARTICLE_URL = (
+    "https://www.mois.go.kr/frt/bbs/type001/commonSelectBoardArticle.do"
+    "?bbsId=BBSMSTR_000000000052&nttId=127979"
+)
+DEFAULT_ZIP_URL = (
+    "https://www.mois.go.kr/cmm/fms/FileDown.do"
+    "?atchFileId=FILE_00147311ctH5-ah&fileSn=1"
+)
+
+HEADERS = {
+    "시도명": ("시도명",),
+    "시군구명": ("시군구명",),
+    "읍면동명": ("읍면동명", "행정동명"),
+    "동리명": ("동리명", "법정동명"),
+}
+
+
+def clean(value: object) -> str:
+    if value is None:
+        return ""
+    text = str(value).strip()
+    if text.endswith(".0") and text[:-2].isdigit():
+        text = text[:-2]
+    return re.sub(r"\s+", " ", text)
+
+
+def find_header_indexes(rows: list[tuple[object, ...]]) -> tuple[int, dict[str, int]]:
+    for row_index, row in enumerate(rows[:30]):
+        normalized = [clean(value).replace(" ", "") for value in row]
+        indexes: dict[str, int] = {}
+        for canonical, variants in HEADERS.items():
+            for variant in variants:
+                target = variant.replace(" ", "")
+                if target in normalized:
+                    indexes[canonical] = normalized.index(target)
+                    break
+        if len(indexes) == len(HEADERS):
+            return row_index, indexes
+    raise RuntimeError("KiKmix 엑셀에서 시도명·시군구명·읍면동명·동리명 헤더를 찾지 못했습니다.")
+
+
+def workbook_rows(content: bytes) -> Iterable[tuple[object, ...]]:
+    workbook = load_workbook(io.BytesIO(content), read_only=True, data_only=True)
+    worksheet = workbook.active
+    yield from worksheet.iter_rows(values_only=True)
+
+
+def build_full_names(sido: str, sigungu: str, admin: str, legal: str) -> tuple[str, str] | None:
+    sido, sigungu, admin, legal = map(clean, (sido, sigungu, admin, legal))
+    if not sido or not admin or not legal:
+        return None
+
+    admin_parts = [sido]
+    if sigungu:
+        admin_parts.append(sigungu)
+    admin_parts.append(admin)
+    admin_full = clean(" ".join(admin_parts))
+
+    legal_parts = [sido]
+    if sigungu:
+        legal_parts.append(sigungu)
+
+    # 법정리는 주소상 읍·면을 함께 써야 구별됩니다.
+    if legal.endswith("리") and admin.endswith(("읍", "면")):
+        legal_parts.extend([admin, legal])
+    elif legal == admin:
+        legal_parts.append(legal)
+    else:
+        legal_parts.append(legal)
+
+    legal_full = clean(" ".join(legal_parts))
+    return legal_full, admin_full
+
+
+def parse_kikmix_xlsx(content: bytes) -> dict[str, set[str]]:
+    rows = list(workbook_rows(content))
+    header_row, indexes = find_header_indexes(rows)
+    aliases: dict[str, set[str]] = defaultdict(set)
+
+    for row in rows[header_row + 1 :]:
+        if not row:
+            continue
+        try:
+            names = build_full_names(
+                row[indexes["시도명"]],
+                row[indexes["시군구명"]],
+                row[indexes["읍면동명"]],
+                row[indexes["동리명"]],
+            )
+        except IndexError:
+            continue
+        if not names:
+            continue
+        legal_full, admin_full = names
+        aliases[legal_full].add(admin_full)
+
+    if len(aliases) < 1000:
+        raise RuntimeError(f"전국 검색 사전 결과가 비정상적으로 적습니다: {len(aliases)}개")
+    return aliases
+
+
+def select_kikmix_xlsx(archive: zipfile.ZipFile) -> str:
+    candidates = [
+        name
+        for name in archive.namelist()
+        if "kikmix" in name.lower()
+        and name.lower().endswith(".xlsx")
+        and "말소" not in name
+        and not Path(name).name.startswith("~$")
+    ]
+    if not candidates:
+        raise RuntimeError("압축파일에서 말소코드 제외 KiKmix 엑셀을 찾지 못했습니다.")
+    candidates.sort(key=lambda name: (len(Path(name).parts), len(name)))
+    return candidates[0]
+
+
+def fetch_zip(url: str) -> bytes:
+    response = requests.get(
+        url,
+        timeout=120,
+        allow_redirects=True,
+        headers={
+            "User-Agent": (
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                "Chrome/124 Safari/537.36 population-dashboard-updater"
+            ),
+            "Referer": DEFAULT_ARTICLE_URL,
+        },
+    )
+    response.raise_for_status()
+    content = response.content
+    if not content.startswith(b"PK"):
+        preview = content[:160].decode("utf-8", errors="replace")
+        raise RuntimeError(f"행안부 응답이 ZIP이 아닙니다: {preview!r}")
+    return content
+
+
+def main() -> None:
+    zip_url = DEFAULT_ZIP_URL
+    if len(sys.argv) > 1 and sys.argv[1].strip():
+        zip_url = sys.argv[1].strip()
+
+    content = fetch_zip(zip_url)
+    with zipfile.ZipFile(io.BytesIO(content)) as archive:
+        xlsx_name = select_kikmix_xlsx(archive)
+        aliases = parse_kikmix_xlsx(archive.read(xlsx_name))
+
+    payload = {
+        "updated": DEFAULT_EFFECTIVE_DATE,
+        "generated": date.today().isoformat(),
+        "scope": "nationwide-official",
+        "source": DEFAULT_ARTICLE_URL,
+        "download": zip_url,
+        "aliases": [
+            {"legal": legal, "admins": sorted(admins)}
+            for legal, admins in sorted(aliases.items())
+        ],
+    }
+    OUTPUT.write_text(
+        json.dumps(payload, ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8",
+        newline="\n",
+    )
+    print(
+        f"Wrote {OUTPUT.name}: {len(payload['aliases']):,} legal areas, "
+        f"{sum(len(item['admins']) for item in payload['aliases']):,} mappings; source={xlsx_name}"
+    )
+
+
+if __name__ == "__main__":
+    main()
