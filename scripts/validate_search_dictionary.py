@@ -5,6 +5,7 @@ import io
 import json
 import re
 from collections import Counter
+from difflib import get_close_matches
 from pathlib import Path
 
 import requests
@@ -24,28 +25,47 @@ def decode_flex(content: bytes) -> str:
     return content.decode("utf-8", errors="replace")
 
 
-def population_names() -> set[str]:
+def population_index() -> tuple[set[str], dict[str, str]]:
     response = requests.get(POPULATION_URL, timeout=180)
     response.raise_for_status()
     reader = csv.reader(io.StringIO(decode_flex(response.content)))
     next(reader)
     names: set[str] = set()
+    code_to_name: dict[str, str] = {}
     for row in reader:
         if not row:
             continue
-        name = re.sub(r"\s*\(\d{8,12}\)\s*$", "", row[0]).strip()
+        raw = row[0].strip()
+        name = re.sub(r"\s*\(\d{8,12}\)\s*$", "", raw).strip()
+        match = re.search(r"\((\d{8,12})\)\s*$", raw)
         if name:
             names.add(name)
-    return names
+        if match and name:
+            code_to_name[match.group(1)] = name
+    return names, code_to_name
+
+
+def candidate_names(missing: str, names: set[str]) -> list[str]:
+    leaf = missing.split()[-1] if missing.split() else missing
+    province = missing.split()[0] if missing.split() else ""
+    same_leaf = sorted(name for name in names if name.split()[-1:] == [leaf])
+    province_leaf = [name for name in same_leaf if name.startswith(province + " ") or name == province]
+    if province_leaf:
+        return province_leaf[:20]
+    if same_leaf:
+        return same_leaf[:20]
+    province_names = sorted(name for name in names if name.startswith(province + " "))
+    return get_close_matches(missing, province_names, n=10, cutoff=0.45)
 
 
 def main() -> None:
     data = json.loads(ALIASES_PATH.read_text(encoding="utf-8"))
     aliases = data.get("aliases", [])
     mapping = {item["legal"]: list(dict.fromkeys(item.get("admins", []))) for item in aliases}
-    names = population_names()
+    names, code_to_name = population_index()
 
     missing_admin_references = []
+    missing_by_admin: dict[str, dict[str, object]] = {}
     empty_aliases = []
     for legal, admins in mapping.items():
         if not admins:
@@ -53,6 +73,13 @@ def main() -> None:
         missing = [admin for admin in admins if admin not in names]
         if missing:
             missing_admin_references.append({"legal": legal, "missing_admins": missing})
+            for admin in missing:
+                item = missing_by_admin.setdefault(
+                    admin,
+                    {"admin": admin, "legal_examples": [], "population_candidates": candidate_names(admin, names)},
+                )
+                if len(item["legal_examples"]) < 20:
+                    item["legal_examples"].append(legal)
 
     probes = [
         "서울특별시 서초구 방배동",
@@ -91,6 +118,7 @@ def main() -> None:
     failed_probes = [legal for legal, result in probe_results.items() if not result["all_exist_in_population"]]
 
     distribution = Counter(len(admins) for admins in mapping.values())
+    missing_provinces = Counter(item["admin"].split()[0] for item in missing_by_admin.values() if item["admin"].split())
     valid = not missing_admin_references and not empty_aliases and not failed_probes
     report = {
         "scope": data.get("scope"),
@@ -100,12 +128,16 @@ def main() -> None:
         "generated": data.get("generated"),
         "alias_count": len(mapping),
         "population_name_count": len(names),
+        "population_code_count": len(code_to_name),
         "coverage": data.get("coverage", {}),
         "missing_admin_reference_count": len(missing_admin_references),
+        "unique_missing_admin_count": len(missing_by_admin),
+        "missing_by_province": dict(missing_provinces.most_common()),
         "empty_alias_count": len(empty_aliases),
         "failed_probe_count": len(failed_probes),
         "failed_probes": failed_probes,
-        "missing_admin_reference_sample": missing_admin_references[:100],
+        "missing_admin_diagnostics": list(missing_by_admin.values()),
+        "missing_admin_reference_sample": missing_admin_references[:200],
         "empty_alias_sample": empty_aliases[:100],
         "admin_count_distribution": {str(key): value for key, value in sorted(distribution.items())},
         "probes": probe_results,
@@ -114,7 +146,8 @@ def main() -> None:
     OUTPUT.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8", newline="\n")
     print(
         f"Search validation valid={valid}; aliases={len(mapping):,}; population={len(names):,}; "
-        f"missing_refs={len(missing_admin_references)}; empty={len(empty_aliases)}; failed_probes={len(failed_probes)}"
+        f"missing_refs={len(missing_admin_references)}; unique_missing={len(missing_by_admin)}; "
+        f"empty={len(empty_aliases)}; failed_probes={len(failed_probes)}"
     )
 
 
