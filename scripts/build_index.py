@@ -2,6 +2,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 base = (ROOT / "base.html").read_text(encoding="utf-8")
+search = (ROOT / "search-enhancements.js").read_text(encoding="utf-8")
 trend = (ROOT / "trend-enhancements.js").read_text(encoding="utf-8")
 guide = (ROOT / "guide-enhancements.js").read_text(encoding="utf-8")
 fieldwork = (ROOT / "fieldwork-enhancements.js").read_text(encoding="utf-8")
@@ -30,7 +31,8 @@ if "</head>" not in base or "</body>" not in base:
 
 base = base.replace("</head>", head_injection + "\n</head>", 1)
 body_injection = (
-    f"\n<script>\n{trend}\n</script>\n"
+    f"\n<script>\n{search}\n</script>\n"
+    f"<script>\n{trend}\n</script>\n"
     f"<script>\n{fieldwork}\n</script>\n"
     f"<script>\n{guide}\n</script>\n"
 )
