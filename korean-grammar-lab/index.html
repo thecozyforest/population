@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#7c5cff">
+  <meta name="description" content="2022 개정 교육과정에 맞춰 형태소·품사·문장 성분·문장 구조를 단계별로 익히는 인터랙티브 국어 문법 학습 앱">
+  <title>말랑문법 연구소 | 품사와 문장 구조</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#mainContent">본문으로 바로 가기</a>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <button class="brand" type="button" data-view="home" aria-label="말랑문법 연구소 홈으로 이동">
+        <span class="brand-mark" aria-hidden="true">말</span>
+        <span>
+          <strong>말랑문법 연구소</strong>
+          <small>2022 화법과 언어 · [12화언01-03]</small>
+        </span>
+      </button>
+
+      <div class="topbar-actions">
+        <div class="mini-stat" aria-label="현재 획득한 별">
+          <span aria-hidden="true">⭐</span>
+          <strong id="starCount">0</strong>
+        </div>
+        <div class="mini-stat" aria-label="연속 정답 수">
+          <span aria-hidden="true">🔥</span>
+          <strong id="streakCount">0</strong>
+        </div>
+        <button class="icon-button" id="tutorialButton" type="button" aria-label="사용 방법 보기" title="사용 방법">?</button>
+        <button class="icon-button" id="resetButton" type="button" aria-label="학습 기록 초기화" title="학습 기록 초기화">↺</button>
+      </div>
+    </header>
+
+    <nav class="stage-nav" aria-label="학습 단계">
+      <button class="stage-tab is-active" type="button" data-view="home">
+        <span aria-hidden="true">🏠</span><span>시작</span>
+      </button>
+      <button class="stage-tab" type="button" data-stage="morpheme">
+        <span aria-hidden="true">🧩</span><span>형태소</span>
+      </button>
+      <button class="stage-tab" type="button" data-stage="pos">
+        <span aria-hidden="true">🧪</span><span>품사</span>
+      </button>
+      <button class="stage-tab" type="button" data-stage="component">
+        <span aria-hidden="true">🎨</span><span>문장 성분</span>
+      </button>
+      <button class="stage-tab" type="button" data-stage="structure">
+        <span aria-hidden="true">🏗️</span><span>문장 구조</span>
+      </button>
+      <button class="stage-tab" type="button" data-view="quiz">
+        <span aria-hidden="true">🎮</span><span>종합 게임</span>
+      </button>
+      <button class="stage-tab" type="button" data-view="review">
+        <span aria-hidden="true">🎯</span><span>집중 복습</span>
+      </button>
+    </nav>
+
+    <main id="mainContent" tabindex="-1">
+      <!-- 홈: 학습 목표와 전체 흐름을 짧고 시각적으로 안내합니다. -->
+      <section class="view is-visible" id="homeView" data-view-panel="home">
+        <div class="hero-card">
+          <div class="hero-copy">
+            <span class="eyebrow">말을 조각내고, 다시 문장으로!</span>
+            <h1>품사와 문장 구조가<br><em>눈에 보이기</em> 시작해요.</h1>
+            <p>형태소 → 품사 → 문장 성분 → 문장 구조의 순서로 연결하면, 외우지 않아도 분석의 기준이 잡힙니다.</p>
+            <div class="hero-actions">
+              <button class="primary-button" id="startLearningButton" type="button">첫 단계 시작 <span aria-hidden="true">→</span></button>
+              <button class="secondary-button" id="openTutorialButton" type="button">30초 사용법</button>
+            </div>
+          </div>
+          <div class="hero-visual" aria-label="형태소가 품사와 문장 성분을 거쳐 문장 구조로 연결되는 그림">
+            <div class="orbit orbit-one">형태소</div>
+            <div class="orbit orbit-two">품사</div>
+            <div class="orbit orbit-three">문장 성분</div>
+            <div class="core-sentence">민지가<br>책을 읽는다.</div>
+          </div>
+        </div>
+
+        <div class="curriculum-banner">
+          <span class="banner-icon" aria-hidden="true">📘</span>
+          <div>
+            <strong>2022 개정 교육과정 핵심</strong>
+            <p>단순히 이름을 맞히는 데서 끝내지 않고, 품사와 문장 구조의 선택이 담화에서 만드는 표현 효과까지 살펴봅니다.</p>
+          </div>
+          <span class="standard-code">[12화언01-03]</span>
+        </div>
+
+        <section class="path-section" aria-labelledby="pathTitle">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">LEARNING PATH</span>
+              <h2 id="pathTitle">한 단계씩 연결하기</h2>
+            </div>
+            <p id="overallProgressText">0 / 4단계 학습 중</p>
+          </div>
+          <div class="path-grid" id="pathGrid"></div>
+        </section>
+
+        <section class="quick-rules" aria-labelledby="ruleTitle">
+          <div class="section-heading compact">
+            <div>
+              <span class="eyebrow">분석의 기준</span>
+              <h2 id="ruleTitle">헷갈릴 때는 이 순서</h2>
+            </div>
+          </div>
+          <div class="rule-flow">
+            <article><span>1</span><strong>최소 단위</strong><p>더 나누면 뜻이나 문법 기능이 사라지는가?</p></article>
+            <i aria-hidden="true">→</i>
+            <article><span>2</span><strong>단어의 갈래</strong><p>형태·기능·의미를 함께 보았는가?</p></article>
+            <i aria-hidden="true">→</i>
+            <article><span>3</span><strong>문장 속 역할</strong><p>주어·목적어처럼 어떤 구실을 하는가?</p></article>
+            <i aria-hidden="true">→</i>
+            <article><span>4</span><strong>절의 관계</strong><p>주어-서술어 관계가 몇 번 나타나는가?</p></article>
+          </div>
+        </section>
+      </section>
+
+      <!-- 개별 학습 단계: 내용은 script.js의 검증된 데이터로 동적 렌더링됩니다. -->
+      <section class="view" id="stageView" data-view-panel="stage" aria-live="polite">
+        <div class="stage-hero">
+          <div>
+            <span class="stage-kicker" id="stageKicker"></span>
+            <h1 id="stageTitle"></h1>
+            <p id="stageSubtitle"></p>
+          </div>
+          <div class="stage-progress-card">
+            <span>이 단계에서 본 예시</span>
+            <strong id="stageSeenCount">0 / 20+</strong>
+            <div class="progress-track" aria-hidden="true"><span id="stageProgressBar"></span></div>
+          </div>
+        </div>
+
+        <div class="micro-steps" role="list" aria-label="현재 단계의 학습 순서">
+          <button class="micro-step is-active" type="button" data-mode="concept"><span>1</span>개념 지도</button>
+          <button class="micro-step" type="button" data-mode="example"><span>2</span>예시 탐색</button>
+          <button class="micro-step" type="button" data-mode="practice"><span>3</span>직접 분류</button>
+          <button class="micro-step" type="button" data-mode="effect"><span>4</span>표현 효과</button>
+          <button class="micro-step" type="button" data-mode="review"><span>5</span>새 예시 복습</button>
+        </div>
+
+        <div class="stage-layout">
+          <aside class="stage-side-card">
+            <span class="side-icon" id="stageIcon" aria-hidden="true"></span>
+            <h2>오늘의 렌즈</h2>
+            <p id="stageLens"></p>
+            <div class="stage-checklist" id="stageChecklist"></div>
+            <button class="secondary-button full-width" id="randomExampleButton" type="button">새 예시 뽑기 🎲</button>
+          </aside>
+
+          <div class="stage-main-card">
+            <section class="mode-panel is-visible" id="conceptPanel" data-mode-panel="concept">
+              <div class="panel-heading">
+                <div><span class="eyebrow">CONCEPT MAP</span><h2>개념을 한눈에</h2></div>
+                <span class="example-count-badge" id="conceptCountBadge"></span>
+              </div>
+              <div id="conceptMap"></div>
+            </section>
+
+            <section class="mode-panel" id="examplePanel" data-mode-panel="example">
+              <div class="panel-heading">
+                <div><span class="eyebrow">EXAMPLE LAB</span><h2>문장을 눌러 분석하기</h2></div>
+                <span class="example-count-badge" id="examplePosition"></span>
+              </div>
+
+              <div class="example-toolbar">
+                <button class="icon-button light" id="prevExampleButton" type="button" aria-label="이전 예시">←</button>
+                <label class="example-select-label">예시 바로 가기
+                  <select id="exampleSelect" aria-label="예시 선택"></select>
+                </label>
+                <button class="icon-button light" id="nextExampleButton" type="button" aria-label="다음 예시">→</button>
+              </div>
+
+              <article class="analysis-card">
+                <p class="focus-prompt" id="examplePrompt"></p>
+                <div class="sentence-display" id="sentenceDisplay"></div>
+                <div class="token-legend" id="tokenLegend"></div>
+                <div class="analysis-feedback" id="analysisFeedback" aria-live="polite">
+                  <span aria-hidden="true">👆</span>
+                  <p>색 조각을 누르면 분석 근거가 나타납니다.</p>
+                </div>
+              </article>
+            </section>
+
+            <section class="mode-panel" id="practicePanel" data-mode-panel="practice">
+              <div class="panel-heading">
+                <div><span class="eyebrow">QUICK CHECK</span><h2>직접 분류해 보기</h2></div>
+                <span class="example-count-badge" id="practiceProgress"></span>
+              </div>
+              <div class="practice-card">
+                <span class="question-tag" id="practiceTag"></span>
+                <h3 id="practiceQuestion"></h3>
+                <div class="question-target" id="practiceTarget"></div>
+                <div class="option-grid" id="practiceOptions"></div>
+                <div class="answer-feedback" id="practiceFeedback" aria-live="polite"></div>
+                <button class="primary-button is-hidden" id="nextPracticeButton" type="button">다음 문제</button>
+              </div>
+            </section>
+
+            <section class="mode-panel" id="effectPanel" data-mode-panel="effect">
+              <div class="panel-heading">
+                <div><span class="eyebrow">EXPRESSION EFFECT</span><h2>같은 내용, 다른 느낌</h2></div>
+              </div>
+              <div class="effect-deck" id="effectDeck"></div>
+            </section>
+
+            <section class="mode-panel" id="stageReviewPanel" data-mode-panel="review">
+              <div class="panel-heading">
+                <div><span class="eyebrow">FOCUS AGAIN</span><h2>헷갈린 지점만 새 예시로</h2></div>
+              </div>
+              <div id="stageReviewContent"></div>
+            </section>
+          </div>
+        </div>
+      </section>
+
+      <!-- 종합 게임: 네 영역에서 무작위로 출제하고 영역별 성취도를 분석합니다. -->
+      <section class="view" id="quizView" data-view-panel="quiz">
+        <div class="quiz-hero">
+          <div>
+            <span class="eyebrow">MIXED CHALLENGE</span>
+            <h1>문법 탐정 종합 게임</h1>
+            <p>형태소·품사·문장 성분·문장 구조를 섞어 12문제를 해결해 보세요.</p>
+          </div>
+          <div class="quiz-score-orbit"><span>최고 점수</span><strong id="bestScore">0</strong><small>/ 12</small></div>
+        </div>
+
+        <div class="quiz-shell">
+          <div class="quiz-start" id="quizStartPanel">
+            <div class="mission-grid">
+              <article><span>🧩</span><strong>형태소</strong><p>두 가지 분류 축 구별</p></article>
+              <article><span>🧪</span><strong>품사</strong><p>형태·기능·의미로 판별</p></article>
+              <article><span>🎨</span><strong>문장 성분</strong><p>문장 안에서의 역할 확인</p></article>
+              <article><span>🏗️</span><strong>문장 구조</strong><p>절의 수와 관계 파악</p></article>
+            </div>
+            <button class="primary-button large" id="startQuizButton" type="button">12문제 도전하기</button>
+          </div>
+
+          <div class="quiz-play is-hidden" id="quizPlayPanel">
+            <div class="quiz-topline">
+              <span id="quizNumber">1 / 12</span>
+              <div class="progress-track"><span id="quizProgressBar"></span></div>
+              <strong id="quizLiveScore">0점</strong>
+            </div>
+            <div class="practice-card quiz-card">
+              <span class="question-tag" id="quizTag"></span>
+              <h2 id="quizQuestion"></h2>
+              <div class="question-target" id="quizTarget"></div>
+              <div class="option-grid" id="quizOptions"></div>
+              <div class="answer-feedback" id="quizFeedback" aria-live="polite"></div>
+              <button class="primary-button is-hidden" id="nextQuizButton" type="button">다음 문제</button>
+            </div>
+          </div>
+
+          <div class="quiz-result is-hidden" id="quizResultPanel"></div>
+        </div>
+      </section>
+
+      <!-- 집중 복습: 오답 기록이 있으면 같은 개념의 '다른 예시'를 우선 제공합니다. -->
+      <section class="view" id="reviewView" data-view-panel="review">
+        <div class="review-hero">
+          <div>
+            <span class="eyebrow">PERSONAL REVIEW</span>
+            <h1>나만의 헷갈림 지도</h1>
+            <p>틀린 문제를 그대로 반복하지 않고, 같은 개념을 새로운 문장으로 다시 확인합니다.</p>
+          </div>
+          <button class="secondary-button" id="clearWrongButton" type="button">오답 기록만 비우기</button>
+        </div>
+        <div class="review-dashboard" id="reviewDashboard"></div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <div>
+        <strong>학습 기준</strong>
+        <p>2022 개정 국어과 교육과정의 「화법과 언어」 성취기준과 국립국어원 표준국어대사전·학교 문법의 일반적 분류를 바탕으로 구성했습니다.</p>
+      </div>
+      <div class="source-links">
+        <a href="https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=294&boardSeq=93459" target="_blank" rel="noreferrer">교육부 2022 개정 교육과정</a>
+        <a href="https://stdict.korean.go.kr/" target="_blank" rel="noreferrer">표준국어대사전</a>
+        <a href="https://www.korean.go.kr/" target="_blank" rel="noreferrer">국립국어원</a>
+      </div>
+      <small>만든 사람 : 기경민(동덕여고)</small>
+    </footer>
+  </div>
+
+  <dialog class="tutorial-dialog" id="tutorialDialog">
+    <form method="dialog">
+      <button class="dialog-close" value="close" aria-label="닫기">×</button>
+      <span class="eyebrow">30초 사용법</span>
+      <h2>외우기보다 ‘판별 과정’을 익혀요.</h2>
+      <ol class="tutorial-list">
+        <li><span>1</span><div><strong>개념 지도</strong><p>분류 기준과 큰 관계를 먼저 봅니다.</p></div></li>
+        <li><span>2</span><div><strong>예시 탐색</strong><p>색 조각을 눌러 분석 근거를 확인합니다.</p></div></li>
+        <li><span>3</span><div><strong>직접 분류</strong><p>답을 고르면 즉시 왜 맞고 틀렸는지 알려 줍니다.</p></div></li>
+        <li><span>4</span><div><strong>표현 효과</strong><p>문법 선택이 문장의 느낌을 어떻게 바꾸는지 비교합니다.</p></div></li>
+        <li><span>5</span><div><strong>집중 복습</strong><p>오답과 같은 개념을 새로운 예시로 다시 만납니다.</p></div></li>
+      </ol>
+      <button class="primary-button full-width" value="close">알겠어요, 시작!</button>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
