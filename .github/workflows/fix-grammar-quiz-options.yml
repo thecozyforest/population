@@ -1,0 +1,99 @@
+name: Fix grammar quiz options
+
+on:
+  push:
+    paths:
+      - .github/workflows/fix-grammar-quiz-options.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Repair answer-choice generation
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("korean-grammar-lab/script.js")
+          source = path.read_text(encoding="utf-8")
+
+          replacements = [
+              (
+                  '''safe=s=>String(s).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;');''',
+                  '''safe=s=>String(s).replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;'),choices=e=>mix([e.answer,...mix([...new Set((e.options||[]).filter(x=>x!==e.answer))]).slice(0,3)]);''',
+              ),
+              (
+                  '''let o=mix([x[2],...TYPE.filter(a=>a!==x[2])]).slice(0,4);''',
+                  '''let o=[x[2],...mix(TYPE.filter(a=>a!==x[2])).slice(0,3)];''',
+              ),
+              (
+                  '''$("#practiceOptions").innerHTML=mix(e.options).map(''',
+                  '''$("#practiceOptions").innerHTML=choices(e).map(''',
+              ),
+              (
+                  '''$("#quizOptions").innerHTML=mix(e.options).map(''',
+                  '''$("#quizOptions").innerHTML=choices(e).map(''',
+              ),
+              (
+                  '''K.forEach(k=>{if(D[k].examples.length<20)throw Error(k+" 예시 부족")});bind();''',
+                  '''K.forEach(k=>{if(D[k].examples.length<20)throw Error(k+" 예시 부족");D[k].examples.forEach((e,i)=>{if(!e.answer||!Array.isArray(e.options))throw Error(`${k} ${i+1}번 문항 데이터 오류`);if(!e.options.includes(e.answer))e.options=[e.answer,...e.options]})});bind();''',
+              ),
+          ]
+
+          for old, new in replacements:
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(f"Expected one match, found {count}: {old[:70]}")
+              source = source.replace(old, new, 1)
+
+          path.write_text(source, encoding="utf-8")
+          PY
+
+      - name: Validate repaired script
+        shell: bash
+        run: |
+          node --check korean-grammar-lab/script.js
+          node <<'JS'
+          const mix = (items) => {
+            const copy = [...items];
+            for (let i = copy.length - 1; i > 0; i -= 1) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+          };
+          const choices = (example) => mix([
+            example.answer,
+            ...mix([...new Set((example.options || []).filter((x) => x !== example.answer))]).slice(0, 3),
+          ]);
+          const example = {
+            answer: "명사절을 안은문장",
+            options: ["종속적으로 이어진 문장", "홑문장", "인용절을 안은문장", "대등하게 이어진 문장"],
+          };
+          for (let i = 0; i < 10000; i += 1) {
+            const options = choices(example);
+            if (!options.includes(example.answer)) throw new Error("정답 누락");
+            if (new Set(options).size !== options.length) throw new Error("선택지 중복");
+          }
+          console.log("10,000회 선택지 무결성 검사 통과");
+          JS
+
+      - name: Commit repaired app
+        shell: bash
+        run: |
+          if git diff --quiet -- korean-grammar-lab/script.js; then
+            echo "No changes required"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add korean-grammar-lab/script.js
+          git commit -m "Fix grammar quiz answer choices"
+          git push
