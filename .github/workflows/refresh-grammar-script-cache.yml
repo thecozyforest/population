@@ -1,0 +1,47 @@
+name: Refresh grammar script cache
+
+on:
+  push:
+    paths:
+      - .github/workflows/refresh-grammar-script-cache.yml
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Version grammar script URL
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("korean-grammar-lab/index.html")
+          source = path.read_text(encoding="utf-8")
+          old = '<script src="script.js" defer></script>'
+          new = '<script src="script.js?v=20260729-2" defer></script>'
+
+          if new in source:
+              raise SystemExit(0)
+          if source.count(old) != 1:
+              raise SystemExit("script tag was not found exactly once")
+
+          path.write_text(source.replace(old, new, 1), encoding="utf-8")
+          PY
+
+      - name: Commit cache refresh
+        shell: bash
+        run: |
+          if git diff --quiet -- korean-grammar-lab/index.html; then
+            echo "No changes required"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add korean-grammar-lab/index.html
+          git commit -m "Refresh grammar app script cache"
+          git push
