@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>정책 의사결정 시뮬레이터</title>
+</head>
+<body>
+  <p style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;padding:20px">불러오는 중...</p>
+  <script>
+    (async () => {
+      try {
+        const files = ['part01.txt','part02.txt','part03.txt','part04.txt','part05.txt','part06.txt'];
+        const parts = await Promise.all(files.map(async (file) => {
+          const response = await fetch(file, { cache: 'no-store' });
+          if (!response.ok) throw new Error(`${file}: ${response.status}`);
+          return response.text();
+        }));
+        const binary = atob(parts.join('').replace(/\s+/g, ''));
+        const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+        const html = new TextDecoder('utf-8').decode(bytes);
+        document.open();
+        document.write(html);
+        document.close();
+      } catch (error) {
+        document.body.innerHTML = `<pre style="white-space:pre-wrap;font-family:monospace;padding:20px">앱을 불러오지 못했습니다.\n${String(error)}</pre>`;
+      }
+    })();
+  </script>
+</body>
+</html>
