@@ -1,0 +1,90 @@
+/* 게임 요소 · 일곱 단계 배치 (2026-11-26 확장판) */
+.path-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.mission-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+
+/* 연구원 등급 */
+.rank-chip { gap: 6px; white-space: nowrap; }
+.rank-chip strong { font-size: .85rem; }
+.rank-card { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 18px; margin: 22px 0 6px; padding: 20px 22px; border-radius: 24px; background: linear-gradient(120deg, #fff7e0, #f1ecff); border: 1px solid #ece3c8; box-shadow: var(--shadow-sm, 0 4px 14px rgba(40, 30, 80, .06)); }
+.rank-main { display: flex; align-items: center; gap: 16px; flex: 1 1 320px; min-width: 0; }
+.rank-icon { display: grid; place-items: center; width: 64px; height: 64px; flex: 0 0 64px; border-radius: 20px; background: white; font-size: 2rem; box-shadow: 0 4px 12px rgba(0, 0, 0, .06); }
+.rank-main h2 { margin: 2px 0 8px; font-size: 1.35rem; }
+.rank-main p { margin: 8px 0 0; color: var(--muted, #6b6780); font-size: .9rem; line-height: 1.5; }
+.rank-bar { height: 12px; border-radius: 999px; background: rgba(255, 255, 255, .9); overflow: hidden; border: 1px solid #e6dcc0; }
+.rank-bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #f5b83d, #7557ff); transition: width .5s; }
+.rank-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.rank-stats button { display: grid; gap: 2px; min-width: 92px; padding: 10px 14px; border: 1px solid #e6dcc0; border-radius: 16px; background: white; font: inherit; cursor: pointer; text-align: center; }
+.rank-stats button:hover { border-color: var(--purple, #7557ff); }
+.rank-stats b { font-size: 1.2rem; }
+.rank-stats span { color: var(--muted, #6b6780); font-size: .8rem; font-weight: 700; }
+
+/* 보스 실험 */
+.boss-card { padding: 26px 22px; border-radius: 22px; background: white; border: 1px solid #ebe6f4; text-align: center; box-shadow: var(--shadow-sm, 0 4px 14px rgba(40, 30, 80, .06)); }
+.boss-card.is-locked { background: #f7f6fa; color: var(--muted, #6b6780); }
+.boss-card.is-play { text-align: left; }
+.boss-card.is-win { background: #f3fcf8; border-color: #bfeadb; }
+.boss-card.is-lose { background: #fff5f7; border-color: #f6c9d4; }
+.boss-face { font-size: 3rem; line-height: 1; margin-bottom: 8px; }
+.boss-card h3 { margin: 6px 0 10px; font-size: 1.3rem; }
+.boss-card p { line-height: 1.6; }
+.boss-done { display: inline-block; margin-left: 6px; padding: 2px 10px; border-radius: 999px; background: var(--success, #20a887); color: white; font-size: .8rem; vertical-align: middle; }
+.boss-hearts { font-size: 1.3rem; letter-spacing: 2px; }
+.boss-top, .speed-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-weight: 800; }
+.boss-card .progress-track { margin-bottom: 14px; }
+.boss-q { margin: 14px 0 8px; font-size: 1.15rem; line-height: 1.5; }
+.boss-card .lab-row, .boss-card .primary-button { justify-content: center; }
+.boss-card.is-play .lab-next { margin-top: 12px; }
+
+/* 스피드 판정 */
+.speed-card { max-width: 720px; margin: 0 auto; padding: 28px 24px; border-radius: 24px; background: white; border: 1px solid #ebe6f4; text-align: center; box-shadow: var(--shadow-sm, 0 4px 14px rgba(40, 30, 80, .06)); }
+.speed-card.is-play { text-align: left; }
+.speed-big { font-size: 3.2rem; line-height: 1; }
+.speed-card h2 { margin: 8px 0; font-size: 1.6rem; }
+.speed-card p { line-height: 1.6; }
+.speed-best b { font-size: 1.4rem; color: var(--purple, #7557ff); }
+.speed-time { font-size: 1.4rem; color: #e2456b; }
+.speed-top strong { font-size: 1.3rem; }
+.speed-track span { background: linear-gradient(90deg, #e2456b, #f5b83d); transition: width .1s linear; }
+.speed-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+.speed-options .option-button { min-height: 64px; font-size: 1.02rem; text-align: center; }
+.speed-flash { min-height: 1.6em; margin: 12px 0 0; font-weight: 800; text-align: center; }
+.speed-flash.ok { color: var(--success, #20a887); }
+.speed-flash.no { color: #e2456b; }
+.speed-log { margin: 14px auto; padding: 12px 16px; max-width: 520px; border-radius: 14px; background: #fff7f9; text-align: left; }
+.speed-log p { margin: 4px 0; font-size: .92rem; }
+
+/* 배지 도감 */
+.dex-section { margin: 22px 0; }
+.dex-section h2 { font-size: 1.15rem; margin: 0 0 12px; }
+.dex-section h2 small { color: var(--muted, #6b6780); font-weight: 700; margin-left: 6px; }
+.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+.badge-card { padding: 16px 14px; border-radius: 18px; background: #f5f4f8; border: 1px dashed #d8d3e4; text-align: center; color: var(--muted, #6b6780); }
+.badge-card.is-on { background: white; border: 1px solid #f0dca0; color: var(--ink, #27233a); box-shadow: 0 4px 14px rgba(239, 164, 47, .15); }
+.badge-card:not(.is-on) .badge-icon { filter: grayscale(1); opacity: .55; }
+.badge-icon { display: block; font-size: 2rem; margin-bottom: 6px; }
+.badge-card strong { display: block; margin-bottom: 4px; }
+.badge-card p { margin: 0; font-size: .82rem; line-height: 1.45; }
+.boss-strip { display: flex; flex-wrap: wrap; gap: 8px; }
+.boss-chip { display: inline-flex; align-items: center; gap: 6px; padding: 9px 14px; border-radius: 999px; border: 1px solid #e3ddef; background: #f7f6fa; font: inherit; font-weight: 700; color: var(--muted, #6b6780); cursor: pointer; }
+.boss-chip.is-on { background: var(--chip); border-color: var(--chip); color: white; }
+.dex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.dex-card { display: block; min-height: 120px; padding: 14px; border-radius: 18px; border: 1px dashed var(--chip); background: white; font: inherit; text-align: left; line-height: 1.5; }
+button.dex-card { display: grid; place-items: center; gap: 4px; text-align: center; color: var(--muted, #6b6780); cursor: pointer; }
+button.dex-card span { font-size: 1.8rem; }
+.dex-card.is-on { border-style: solid; background: var(--chip-soft); }
+.dex-card strong { display: block; margin-bottom: 6px; }
+.dex-card p { margin: 3px 0; font-size: .9rem; }
+.dex-card p b { color: var(--chip); }
+.dex-card small { display: block; margin-top: 6px; color: var(--muted, #6b6780); }
+
+@media (max-width: 520px) { .rank-chip { display: none; } }
+@media (max-width: 720px) {
+  .rank-chip strong { display: none; }
+  .rank-card { padding: 16px; }
+  .rank-stats { width: 100%; }
+  .rank-stats button { flex: 1; min-width: 0; padding: 8px; }
+  .speed-options { grid-template-columns: 1fr; }
+  .badge-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .badge-card { padding: 12px 8px; }
+  .speed-card, .boss-card { padding: 20px 16px; }
+}

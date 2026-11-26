@@ -4,10 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#7c5cff">
-  <meta name="description" content="2022 개정 교육과정에 맞춰 형태소·품사·문장 성분·문장 구조를 단계별로 익히는 인터랙티브 국어 문법 학습 앱">
-  <title>말랑문법 연구소 | 품사와 문장 구조</title>
+  <meta name="description" content="2022 개정 교육과정에 맞춰 형태소·품사·문장 성분·문장 구조·음운 변동·단어의 짜임과 의미·문법 요소를 단계별로 익히는 인터랙티브 국어 문법 학습 앱">
+  <title>말랑문법 연구소 | 화법과 언어 문법 7단계</title>
   <link rel="stylesheet" href="style.css">
-  <script src="script.js?v=20260729-2" defer></script>
+  <link rel="stylesheet" href="lab.css?v=20261126b">
+  <link rel="stylesheet" href="game.css?v=20261126b">
+  <script src="script.js?v=20261126b" defer></script>
+  <script src="lab.js?v=20261126b" defer></script>
+  <script src="game.js?v=20261126b" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#mainContent">본문으로 바로 가기</a>
@@ -23,6 +27,7 @@
       </button>
 
       <div class="topbar-actions">
+        <button class="mini-stat rank-chip" id="rankChip" type="button" data-view="dex" aria-label="내 연구원 등급과 배지 도감"></button>
         <div class="mini-stat" aria-label="현재 획득한 별">
           <span aria-hidden="true">⭐</span>
           <strong id="starCount">0</strong>
@@ -52,11 +57,26 @@
       <button class="stage-tab" type="button" data-stage="structure">
         <span aria-hidden="true">🏗️</span><span>문장 구조</span>
       </button>
+      <button class="stage-tab" type="button" data-stage="phonology">
+        <span aria-hidden="true">🔊</span><span>음운 변동</span>
+      </button>
+      <button class="stage-tab" type="button" data-stage="word">
+        <span aria-hidden="true">🧱</span><span>단어 짜임</span>
+      </button>
+      <button class="stage-tab" type="button" data-stage="element">
+        <span aria-hidden="true">🎛️</span><span>문법 요소</span>
+      </button>
       <button class="stage-tab" type="button" data-view="quiz">
         <span aria-hidden="true">🎮</span><span>종합 게임</span>
       </button>
       <button class="stage-tab" type="button" data-view="review">
         <span aria-hidden="true">🎯</span><span>집중 복습</span>
+      </button>
+      <button class="stage-tab" type="button" data-view="speed">
+        <span aria-hidden="true">⚡</span><span>스피드 판정</span>
+      </button>
+      <button class="stage-tab" type="button" data-view="dex">
+        <span aria-hidden="true">🗂️</span><span>배지 도감</span>
       </button>
     </nav>
 
@@ -67,7 +87,7 @@
           <div class="hero-copy">
             <span class="eyebrow">말을 조각내고, 다시 문장으로!</span>
             <h1>품사와 문장 구조가<br><em>눈에 보이기</em> 시작해요.</h1>
-            <p>형태소 → 품사 → 문장 성분 → 문장 구조의 순서로 연결하면, 외우지 않아도 분석의 기준이 잡힙니다.</p>
+            <p>형태소 → 품사 → 문장 성분 → 문장 구조로 연결하고, 음운 변동 · 단어의 짜임과 의미 · 문법 요소까지 넓혀 가면 외우지 않아도 판정의 기준이 잡힙니다.</p>
             <div class="hero-actions">
               <button class="primary-button" id="startLearningButton" type="button">첫 단계 시작 <span aria-hidden="true">→</span></button>
               <button class="secondary-button" id="openTutorialButton" type="button">30초 사용법</button>
@@ -90,13 +110,15 @@
           <span class="standard-code">[12화언01-03]</span>
         </div>
 
+        <section class="rank-card" id="rankCard" aria-label="내 연구원 등급"></section>
+
         <section class="path-section" aria-labelledby="pathTitle">
           <div class="section-heading">
             <div>
               <span class="eyebrow">LEARNING PATH</span>
               <h2 id="pathTitle">한 단계씩 연결하기</h2>
             </div>
-            <p id="overallProgressText">0 / 4단계 학습 중</p>
+            <p id="overallProgressText">0 / 7단계 학습 중</p>
           </div>
           <div class="path-grid" id="pathGrid"></div>
         </section>
@@ -138,9 +160,12 @@
         <div class="micro-steps" role="list" aria-label="현재 단계의 학습 순서">
           <button class="micro-step is-active" type="button" data-mode="concept"><span>1</span>개념 지도</button>
           <button class="micro-step" type="button" data-mode="example"><span>2</span>예시 탐색</button>
-          <button class="micro-step" type="button" data-mode="practice"><span>3</span>직접 분류</button>
-          <button class="micro-step" type="button" data-mode="effect"><span>4</span>표현 효과</button>
-          <button class="micro-step" type="button" data-mode="review"><span>5</span>새 예시 복습</button>
+          <button class="micro-step" type="button" data-mode="lab"><span>3</span>판정 실험실</button>
+          <button class="micro-step" type="button" data-mode="pairs"><span>4</span>헷갈리는 쌍</button>
+          <button class="micro-step" type="button" data-mode="practice"><span>5</span>직접 분류</button>
+          <button class="micro-step" type="button" data-mode="effect"><span>6</span>표현 효과</button>
+          <button class="micro-step" type="button" data-mode="review"><span>7</span>새 예시 복습</button>
+          <button class="micro-step" type="button" data-mode="boss"><span>8</span>보스 실험</button>
         </div>
 
         <div class="stage-layout">
@@ -186,6 +211,24 @@
               </article>
             </section>
 
+            <section class="mode-panel" id="labPanel" data-mode-panel="lab">
+              <div class="panel-heading">
+                <div><span class="eyebrow">DECISION LAB</span><h2>판정 순서대로 따져 보기</h2></div>
+                <span class="example-count-badge" id="labCount"></span>
+              </div>
+              <p class="lab-intro">이름부터 고르지 말고, 수업에서 배운 질문을 차례로 던져 보세요. 어미를 붙여 보고, 빼 보고, 바꿔 보면 답이 보여요.</p>
+              <div id="labContent"></div>
+            </section>
+
+            <section class="mode-panel" id="pairPanel" data-mode-panel="pairs">
+              <div class="panel-heading">
+                <div><span class="eyebrow">CONFUSING PAIRS</span><h2>닮은 두 문장, 무엇이 갈랐을까</h2></div>
+                <span class="example-count-badge" id="pairCount"></span>
+              </div>
+              <p class="lab-intro">겉모습이 닮은 두 문장을 각각 판정한 다음, 둘을 가른 기준을 골라 보세요.</p>
+              <div id="pairContent"></div>
+            </section>
+
             <section class="mode-panel" id="practicePanel" data-mode-panel="practice">
               <div class="panel-heading">
                 <div><span class="eyebrow">QUICK CHECK</span><h2>직접 분류해 보기</h2></div>
@@ -214,6 +257,13 @@
               </div>
               <div id="stageReviewContent"></div>
             </section>
+
+            <section class="mode-panel" id="bossPanel" data-mode-panel="boss">
+              <div class="panel-heading">
+                <div><span class="eyebrow">BOSS LAB</span><h2>단계 보스 실험</h2></div>
+              </div>
+              <div id="bossContent"></div>
+            </section>
           </div>
         </div>
       </section>
@@ -224,9 +274,9 @@
           <div>
             <span class="eyebrow">MIXED CHALLENGE</span>
             <h1>문법 탐정 종합 게임</h1>
-            <p>형태소·품사·문장 성분·문장 구조를 섞어 12문제를 해결해 보세요.</p>
+            <p>일곱 단계에서 두 문제씩, 14문제를 섞어 해결해 보세요.</p>
           </div>
-          <div class="quiz-score-orbit"><span>최고 점수</span><strong id="bestScore">0</strong><small>/ 12</small></div>
+          <div class="quiz-score-orbit"><span>최고 점수</span><strong id="bestScore">0</strong><small>/ 14</small></div>
         </div>
 
         <div class="quiz-shell">
@@ -236,13 +286,16 @@
               <article><span>🧪</span><strong>품사</strong><p>형태·기능·의미로 판별</p></article>
               <article><span>🎨</span><strong>문장 성분</strong><p>문장 안에서의 역할 확인</p></article>
               <article><span>🏗️</span><strong>문장 구조</strong><p>절의 수와 관계 파악</p></article>
+              <article><span>🔊</span><strong>음운 변동</strong><p>음운 개수로 유형 판정</p></article>
+              <article><span>🧱</span><strong>단어 짜임</strong><p>둘로 나눠 합성·파생 판정</p></article>
+              <article><span>🎛️</span><strong>문법 요소</strong><p>높임·시간·피동·부정</p></article>
             </div>
-            <button class="primary-button large" id="startQuizButton" type="button">12문제 도전하기</button>
+            <button class="primary-button large" id="startQuizButton" type="button">14문제 도전하기</button>
           </div>
 
           <div class="quiz-play is-hidden" id="quizPlayPanel">
             <div class="quiz-topline">
-              <span id="quizNumber">1 / 12</span>
+              <span id="quizNumber">1 / 14</span>
               <div class="progress-track"><span id="quizProgressBar"></span></div>
               <strong id="quizLiveScore">0점</strong>
             </div>
@@ -272,6 +325,30 @@
         </div>
         <div class="review-dashboard" id="reviewDashboard"></div>
       </section>
+
+      <!-- 스피드 판정: 60초 동안 두 답 가운데 하나를 고른다. 최고 기록만 이 브라우저에 저장한다. -->
+      <section class="view" id="speedView" data-view-panel="speed">
+        <div class="review-hero">
+          <div>
+            <span class="eyebrow">SPEED JUDGE</span>
+            <h1>60초 스피드 판정</h1>
+            <p>기준이 몸에 붙었는지 빠르게 확인해 보세요. 틀린 문제는 끝나고 다시 보여 줘요.</p>
+          </div>
+        </div>
+        <div id="speedContent"></div>
+      </section>
+
+      <!-- 배지 도감: 배지 · 보스 격파 · 헷갈리는 쌍 카드 모음 -->
+      <section class="view" id="dexView" data-view-panel="dex">
+        <div class="review-hero">
+          <div>
+            <span class="eyebrow">COLLECTION</span>
+            <h1>배지 도감</h1>
+            <p>모은 배지와 보스 격파 기록, 풀어 낸 헷갈리는 쌍 카드를 한눈에 봅니다. 빈 카드를 누르면 그 단계로 가요.</p>
+          </div>
+        </div>
+        <div id="dexContent"></div>
+      </section>
     </main>
 
     <footer class="app-footer">
@@ -296,9 +373,12 @@
       <ol class="tutorial-list">
         <li><span>1</span><div><strong>개념 지도</strong><p>분류 기준과 큰 관계를 먼저 봅니다.</p></div></li>
         <li><span>2</span><div><strong>예시 탐색</strong><p>색 조각을 눌러 분석 근거를 확인합니다.</p></div></li>
-        <li><span>3</span><div><strong>직접 분류</strong><p>답을 고르면 즉시 왜 맞고 틀렸는지 알려 줍니다.</p></div></li>
-        <li><span>4</span><div><strong>표현 효과</strong><p>문법 선택이 문장의 느낌을 어떻게 바꾸는지 비교합니다.</p></div></li>
-        <li><span>5</span><div><strong>집중 복습</strong><p>오답과 같은 개념을 새로운 예시로 다시 만납니다.</p></div></li>
+        <li><span>3</span><div><strong>판정 실험실</strong><p>어미 붙여 보기, 빼 보기, 잘라 보기로 판정 순서를 따라갑니다.</p></div></li>
+        <li><span>4</span><div><strong>헷갈리는 쌍</strong><p>닮은 두 문장을 견주어 둘을 가른 기준을 찾습니다.</p></div></li>
+        <li><span>5</span><div><strong>직접 분류</strong><p>답을 고르면 바로 왜 맞고 틀렸는지 알려 줍니다.</p></div></li>
+        <li><span>6</span><div><strong>표현 효과</strong><p>문법 선택이 문장의 느낌을 어떻게 바꾸는지 견주어 봅니다.</p></div></li>
+        <li><span>7</span><div><strong>집중 복습</strong><p>오답과 같은 개념을 새로운 예시로 다시 만납니다.</p></div></li>
+        <li><span>8</span><div><strong>보스 실험 · 스피드 판정</strong><p>실험을 다 풀면 보스가 열려요. 별을 모아 연구원 등급을 올리고 배지를 모읍니다.</p></div></li>
       </ol>
       <button class="primary-button full-width" value="close">알겠어요, 시작!</button>
     </form>
